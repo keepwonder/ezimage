@@ -2,7 +2,7 @@
   "name": "ezimage",
   "displayName": "EzImage",
   "description": "The ultimate effortless multi-platform image uploader for VS Code. Support R2, S3 and more.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "kiang",
   "author": "Kiang (keepwonder)",
   "repository": {
