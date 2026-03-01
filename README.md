@@ -6,7 +6,7 @@
   <p>
     <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
-    <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae%20%7C%20Antigravity-blueviolet.svg" alt="IDEs" />
+    <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
   </p>
 
