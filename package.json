@@ -113,6 +113,11 @@
           "command": "ezimage.uploadClipboard",
           "when": "editorLangId == markdown",
           "group": "modification"
+        },
+        {
+          "command": "ezimage.uploadFile",
+          "when": "editorLangId == markdown",
+          "group": "modification@1"
         }
       ]
     }
