@@ -1,67 +1,98 @@
-# EzImage
+<div align="center">
+  <img src="https://images.flashnote.top/2026/02/icon.png" width="128" alt="EzImage Logo" />
+  <h1>EzImage</h1>
+  <p><b>为 VS Code 打造的极简、高效、支持多平台的图床上传插件</b></p>
 
-![EzImage Logo](https://images.flashnote.top/2026/02/icon.png)
+  <p>
+    <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
+    <img src="https://img.shields.io/badge/Framework-VS%20Code-007ACC.svg" alt="Framework" />
+    <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
+  </p>
 
-**EzImage** 是一款为 VS Code 打造的极简、高效多平台图床上传插件。它可以帮助你在编辑 Markdown 时，无缝地将剪贴板图片、本地文件或通过拖拽的方式上传到云端存储（如 Cloudflare R2），并自动插入 Markdown 链接。
-
-## ✨ 特性
-
--   🚀 **多平台支持**: 灵活架构，目前支持 Cloudflare R2，未来将接入 S3, 阿里云 OSS, 腾讯云 COS 等。
--   📸 **剪贴板上传**: 快捷键 `Cmd+Alt+V` (Mac) 或 `Ctrl+Alt+V` (Windows/Linux) 瞬间完成贴图。
--   🖱️ **拖拽上传**: 直接将图片文件拖入编辑器，自动完成上传并插入链接。
--   📉 **智能压缩**: 内置 `sharp` 引擎，支持自动转 WebP、调整尺寸及质量优化，极致节省空间。
--   📂 **自定义路径**: 支持 `{yyyy}/{MM}/{timestamp}` 等动态变量。
--   📋 **右键集成**: 深度集成编辑器菜单，操作极其自然。
-
-## 📦 安装
-
-1.  下载最新的 `.vsix` 文件。
-2.  在 VS Code 中执行 `Extensions: Install from VSIX...`。
-3.  或者使用命令行: `code --install-extension ezimage-1.0.0.vsix`。
-
-## ⚙️ 配置
-
-安装后，请按 `Cmd+Shift+P` 运行 **`EzImage: Configure Settings`**。
-
-你需要配置以下信息（以 R2 为例）：
-
--   **Provider**: 选择 `r2`。
--   **Account ID**: 你的 Cloudflare 账户 ID。
--   **Access Key ID**: R2 的访问密钥 ID。
--   **Secret Access Key**: R2 的秘钥。
--   **Bucket Name**: 存储桶名称。
--   **Public URL**: 你的自定义域名或 R2 公网地址。
-
-## ⌨️ 快捷键
-
--   **上传剪贴板图片**: `Cmd+Alt+V` (Mac) / `Ctrl+Alt+V` (Win/Linux)
--   **上传本地文件**: 搜索命令 `EzImage: Upload Image File`
-
-## 🤝 贡献与反馈
-
-如果你有任何建议，欢迎在 GitHub 提交 Issue。
+  <p>
+    <a href="#✨-特性">特性</a> •
+    <a href="#📦-安装">安装</a> •
+    <a href="#⚙️-配置">配置</a> •
+    <a href="#⌨️-快捷键">快捷键</a> •
+    <a href="#🤝-贡献与反馈">反馈</a>
+  </p>
+</div>
 
 ---
 
-Developed with ❤️ by Kiang
+**EzImage** 是一款专为 VS Code 深度定制的图床工具。它旨在解决 Markdown 创作中“存图难、贴图烦”的痛点，帮助你以最自然的方式（剪贴板粘贴、拖拽、右键菜单）完成图片上传并将 Markdown 链接一键插入文档。
+
+## ✨ 特性
+
+-   **🚀 多平台支持**: 采用 Provider 插件化架构，首发支持 Cloudflare R2，即将接入 AWS S3、阿里云 OSS、腾讯云 COS 等。
+-   **📸 极致贴图体验**:
+    *   **剪贴板上传**: `Cmd+Alt+V` (Mac) 或 `Ctrl+Alt+V` (Win/Linux) 瞬间完成上传并插入。
+    *   **丝滑拖拽**: 直接从系统文件夹拖入图片，自动处理并生成链接。
+-   **📉 智能图片引擎**: 内置 `sharp` 工业级处理引擎。
+    *   自动转换为 **WebP** 格式，极致压缩体积且保持画质。
+    *   支持自动尺寸调整（Max Width）和质量控制。
+-   **📂 灵活的文件命名**: 支持丰富的变量模板，如 `{yyyy}/{MM}/{timestamp}-{random}.{ext}`，告别文件名冲突。
+-   **📋 深度集成**: 提供编辑器右键上下文菜单，无需记忆复杂指令。
+
+## 📦 安装
+
+### 方式 A：从 VSIX 安装（推荐）
+1.  从 [GitHub Releases](https://github.com/keepwonder/ezimage/releases) 下载最新的 `.vsix` 文件。
+2.  在 VS Code 扩展面板点击 `...` -> `Install from VSIX...`。
+3.  或者执行命令行: `code --install-extension ezimage-1.0.0.vsix`。
+
+### 方式 B：从 Marketplace（即将上线）
+1.  在扩展市场搜索 `EzImage` 即可一键安装。
+
+## ⚙️ 配置
+
+安装完成后，建议进行如下基础操作：
+
+1. 按 `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win) 唤起命令面板。
+2. 搜索并运行 **`EzImage: Configure Settings`**。
+3. 配置您的存储服务（以 Cloudflare R2 为例）：
+   - **Provider**: `r2`
+   - **Account ID**: 您的 API 令牌关联账户 ID
+   - **Bucket Name**: 存储桶名称
+   - **Access Key ID / Secret Access Key**: R2 访问密钥对
+   - **Public URL**: 您的 Bucket 公网分发地址
+
+## ⌨️ 快捷键
+
+| 功能 | Mac 快捷键 | Windows/Linux 快捷键 |
+| :--- | :--- | :--- |
+| **上传剪贴板图片** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
+| **上传本地文件** | 命令面板搜索 `EzImage: Upload Image File` |
+
+## 🗺️ 发展蓝图 (Roadmap)
+
+- [x] Cloudflare R2 基础上传支持
+- [x] 多格式图片自动转 WebP 压缩
+- [ ] AWS S3 通用协议支持
+- [ ] 阿里云 OSS、腾讯云 COS 接入
+- [ ] Gitee/GitHub 图床模式
+- [ ] 图片上传历史记录统计预览
+
+## 🤝 贡献与反馈
+
+如果您在使用过程中遇到任何问题，或者有功能建议，欢迎：
+- 在 [GitHub Issue](https://github.com/keepwonder/ezimage/issues) 提交反馈。
+- 加入我们的交流群进行深度讨论。
 
 ---
 
 ## 📞 联系与支持
 
-如果你觉得这个插件对你有帮助，欢迎通过以下方式联系我或给予支持。
-
 ### 💬 交流反馈
-
 扫描下方二维码添加作者微信，请备注 **"EzImage"** 以便通过：
 
 <div align="center">
   <img src="https://images.flashnote.top/contact/wechat_qr.png" width="200" alt="WeChat Contact" />
-  <p>微信联系方式</p>
+  <p><i>微信扫一扫，获取技术支持</i></p>
 </div>
 
 ### ☕ 赞赏支持
-
 如果 EzImage 提升了你的工作效率，欢迎请作者喝杯咖啡 ☕️！你的支持是我持续优化和维护的最大动力。
 
 <div align="center">
@@ -80,3 +111,7 @@ Developed with ❤️ by Kiang
     </tr>
   </table>
 </div>
+
+---
+
+<p align="center">Developed with ❤️ by <b>Kiang</b></p>
