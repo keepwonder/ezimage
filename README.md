@@ -1,12 +1,12 @@
 <div align="center">
   <img src="https://images.flashnote.top/2026/02/icon.png" width="128" alt="EzImage Logo" />
   <h1>EzImage</h1>
-  <p><b>为 VS Code 打造的极简、高效、支持多平台的图床上传插件</b></p>
+  <p><b>为 VS Code & AI-first IDEs 打造的极简、高效、支持多平台的图床上传插件</b></p>
 
   <p>
     <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
-    <img src="https://img.shields.io/badge/Framework-VS%20Code-007ACC.svg" alt="Framework" />
+    <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
   </p>
 
@@ -35,15 +35,33 @@
 -   **📂 灵活的文件命名**: 支持丰富的变量模板，如 `{yyyy}/{MM}/{timestamp}-{random}.{ext}`，告别文件名冲突。
 -   **📋 深度集成**: 提供编辑器右键上下文菜单，无需记忆复杂指令。
 
+## 🚀 多编辑器支持
+
+EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI 代码编辑器及 VS Code 定制版：
+
+-   **Cursor**: 直接兼容，性能卓越。
+-   **Windsurf**: 全功能支持。
+-   **Trae**: 字节跳动出品，完美适配。
+-   **VSCodium**: 开源版 VS Code 同样适用。
+
 ## 📦 安装
 
-### 方式 A：从 VSIX 安装（推荐）
-1.  从 [GitHub Releases](https://github.com/keepwonder/ezimage/releases) 下载最新的 `.vsix` 文件。
-2.  在 VS Code 扩展面板点击 `...` -> `Install from VSIX...`。
-3.  或者执行命令行: `code --install-extension ezimage-1.0.0.vsix`。
+### 方式 A：从 VSIX 安装（所有 IDE 通用）
 
-### 方式 B：从 Marketplace（即将上线）
-1.  在扩展市场搜索 `EzImage` 即可一键安装。
+1.  从 [GitHub Releases](https://github.com/keepwonder/ezimage/releases) 下载最新的 `.vsix` 文件。
+2.  在您的编辑器中按 `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win)，搜索 `Install from VSIX`。
+3.  或者使用命令行安装：
+
+| IDE | 命令行指令 |
+| :--- | :--- |
+| **VS Code** | `code --install-extension ezimage-1.0.0.vsix` |
+| **Cursor** | `cursor --install-extension ezimage-1.0.0.vsix` |
+| **Windsurf** | `windsurf --install-extension ezimage-1.0.0.vsix` |
+| **Trae** | `trae --install-extension ezimage-1.0.0.vsix` |
+
+### 方式 B：从 Marketplace
+
+1.  在扩展市场中搜索 `EzImage` 即可一键安装（目前支持 VS Code Marketplace, Cursor Marketplace 等）。
 
 ## ⚙️ 配置
 
