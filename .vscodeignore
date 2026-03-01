@@ -1,0 +1,14 @@
+src/**
+tsconfig.json
+package-lock.json
+.git/**
+.gitignore
+.claude/**
+*.vsix
+README.md
+icon.png
+!out/**
+!node_modules/**
+!package.json
+!README.md
+!icon.png

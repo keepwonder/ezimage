@@ -35,7 +35,7 @@
 ## ⌨️ 快捷键
 
 -   **上传剪贴板图片**: `Cmd+Alt+V` (Mac) / `Ctrl+Alt+V` (Win/Linux)
--   - **上传本地文件**: 搜索命令 `EzImage: Upload Image File`
+-   **上传本地文件**: 搜索命令 `EzImage: Upload Image File`
 
 ## 🤝 贡献与反馈
 

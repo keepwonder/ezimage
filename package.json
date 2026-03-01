@@ -1,0 +1,135 @@
+{
+  "name": "ezimage",
+  "displayName": "EzImage",
+  "description": "The ultimate effortless multi-platform image uploader for VS Code. Support R2, S3 and more.",
+  "version": "1.0.0",
+  "publisher": "kiang",
+  "author": "Kiang (keepwonder)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keepwonder/ezimage"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown",
+    "onCommand:ezimage.uploadClipboard",
+    "onCommand:ezimage.uploadFile",
+    "onCommand:ezimage.configure"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ezimage.uploadClipboard",
+        "title": "Upload Clipboard Image",
+        "category": "EzImage"
+      },
+      {
+        "command": "ezimage.uploadFile",
+        "title": "Upload Image File",
+        "category": "EzImage"
+      },
+      {
+        "command": "ezimage.configure",
+        "title": "Configure Settings",
+        "category": "EzImage"
+      }
+    ],
+    "configuration": {
+      "title": "EzImage",
+      "properties": {
+        "ezimage.provider": {
+          "type": "string",
+          "enum": [
+            "r2"
+          ],
+          "default": "r2",
+          "description": "Select your cloud storage provider"
+        },
+        "ezimage.r2.accountId": {
+          "type": "string",
+          "default": "",
+          "description": "[R2] Cloudflare Account ID"
+        },
+        "ezimage.r2.accessKeyId": {
+          "type": "string",
+          "default": "",
+          "description": "[R2] Access Key ID"
+        },
+        "ezimage.r2.secretAccessKey": {
+          "type": "string",
+          "default": "",
+          "description": "[R2] Secret Access Key"
+        },
+        "ezimage.r2.bucketName": {
+          "type": "string",
+          "default": "",
+          "description": "[R2] Bucket Name"
+        },
+        "ezimage.r2.publicUrl": {
+          "type": "string",
+          "default": "",
+          "description": "[R2] Public URL (e.g., https://pub-xxx.r2.dev)"
+        },
+        "ezimage.pathTemplate": {
+          "type": "string",
+          "default": "{yyyy}/{MM}/{timestamp}-{random}.{ext}",
+          "description": "Path template for uploaded images"
+        },
+        "ezimage.compress": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable image compression"
+        },
+        "ezimage.maxWidth": {
+          "type": "number",
+          "default": 1920,
+          "description": "Maximum width for compressed images"
+        },
+        "ezimage.quality": {
+          "type": "number",
+          "default": 85,
+          "description": "JPEG quality for compression (1-100)"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "ezimage.uploadClipboard",
+        "when": "editorTextFocus && editorLangId == markdown",
+        "key": "ctrl+alt+v",
+        "mac": "cmd+alt+v"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "ezimage.uploadClipboard",
+          "when": "editorLangId == markdown",
+          "group": "modification"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.74.0",
+    "esbuild": "^0.27.3",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.450.0",
+    "sharp": "^0.33.0"
+  }
+}
