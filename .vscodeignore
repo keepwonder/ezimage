@@ -5,10 +5,13 @@ package-lock.json
 .gitignore
 .claude/**
 *.vsix
-README.md
-icon.png
+.vscode/**
+.github/**
+
 !out/**
 !node_modules/**
 !package.json
 !README.md
+!README_CN.md
+!LICENSE
 !icon.png
