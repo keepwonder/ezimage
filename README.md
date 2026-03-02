@@ -141,4 +141,4 @@ If EzImage has improved your efficiency, feel free to buy me a coffee! Your supp
 
 ---
 
-<p align="center">Developed with ❤️ by <b>Kiang</b></p>
+<p align="center">Developed with ❤️ by <a href="https://keepwonder.top"><b>Kiang</b></a></p>
