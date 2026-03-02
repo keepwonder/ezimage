@@ -4,7 +4,7 @@
   <p><b>A Minimalist, Efficient Multi-Platform Image Uploader for VS Code & AI-first IDEs</b></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.0.0-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.1-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
@@ -67,10 +67,10 @@ EzImage not only supports standard **VS Code**, but also perfectly adapts to cur
 | **Windsurf** | `windsurf --install-extension ezimage-1.0.0.vsix` |
 | **Trae** | `trae --install-extension ezimage-1.0.0.vsix` |
 
-### Method B: From Marketplace (Coming Soon)
+### Method B: From Marketplace
 
 1.  Search for `EzImage` in the extension marketplace and install it with one click.
-2.  Currently under review, stay tuned.
+2.  Or visit the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=kiang.ezimage) to install.
 
 ## <span id="config"></span>⚙️ Configuration
 
