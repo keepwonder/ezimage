@@ -17,8 +17,12 @@ npm install -g @vscode/vsce
 VS Code 市场的认证是基于 Azure DevOps 的令牌（PAT）的。
 
 1.  **创建 Microsoft 账号**: 如果没有，去 [outlook.com](https://outlook.com) 注册一个。
-2.  **登录 Azure DevOps**: 访问 [dev.azure.com](https://dev.azure.com/) 并登录。
-3.  **创建组织 (Organization)**: 如果是第一次登录，系统会引导你创建一个 Organization，名字可以随便起（比如你的 GitHub 用户名）。
+2.  **登录 Azure DevOps**: 访问 [dev.azure.com](https://dev.azure.com/)。
+3.  **点击 "New organization"**: 
+    *   通常在登录后的左下角。
+    *   如果系统提示选择地区，建议选 `Central US` 或 `East Asia`。
+    *   **注意**: 即使带有 "Azure" 字样，此步骤也是**完全免费**的，不需要绑定信用卡或购买订阅。
+4.  **完成验证**: 名字可以随便起（例如 `kiang-dev`），完成后即可进入组织后台。
 
 ---
 
