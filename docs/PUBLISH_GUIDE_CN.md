@@ -18,11 +18,20 @@ VS Code 市场的认证是基于 Azure DevOps 的令牌（PAT）的。
 
 1.  **创建 Microsoft 账号**: 如果没有，去 [outlook.com](https://outlook.com) 注册一个。
 2.  **登录 Azure DevOps**: 访问 **[https://aex.dev.azure.com/me](https://aex.dev.azure.com/me)**。
+    
+    ![ezimage-1772428036126.png](https://images.flashnote.top/2026/03/1772428036483-j3erp8xj.png)
     *   **⚠️ 防走丢提示**: 如果点击主页的 "Sign in" 跳转到了 Azure Portal，请直接手动在浏览器输入上面的 `aex.dev.azure.com/me`。这是管理组织的**直达通道**。
 3.  **点击 "New organization"**: 
     *   通常在登录后的左下角。
     *   如果系统提示选择地区，建议选 `Central US` 或 `East Asia`。
     *   **注意**: 即使带有 "Azure" 字样，此步骤也是**完全免费**的，不需要绑定信用卡或购买订阅。
+    ![ezimage-1772428188590.png](https://images.flashnote.top/2026/03/1772428188985-ye6tqzly.png)
+
+    需要有一个订阅否则点击 continue 没有响应
+
+    ![ezimage-1772428860660.png](https://images.flashnote.top/2026/03/1772428861120-tjojx1b0.png)
+
+    ![ezimage-1772428883381.png](https://images.flashnote.top/2026/03/1772428883561-uvq0ekf1.png)
 4.  **完成验证**: 名字可以随便起（例如 `kiang-dev`），完成后即可进入组织后台。
 
 ---
@@ -39,6 +48,8 @@ VS Code 市场的认证是基于 Azure DevOps 的令牌（PAT）的。
     *   点击下方的 **Show all scopes**，找到 **Marketplace** 项：
         *   勾选 **Acquire** 和 **Manage**。
 3.  点击 **Create**。
+
+![ezimage-1772428961523.png](https://images.flashnote.top/2026/03/1772428961905-r182b0fc.png)
 4.  **重要**: 复制并保存这个生成的令牌（Token），它只会出现这一次。
 
 ---
