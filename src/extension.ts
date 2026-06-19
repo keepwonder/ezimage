@@ -212,6 +212,108 @@ function isImageFile(filePath: string): boolean {
   return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext);
 }
 
+interface ClipboardFileResult {
+  filePath: string | null;
+  containsFileReference: boolean;
+}
+
+async function getClipboardImageFilePath(): Promise<ClipboardFileResult> {
+  // Finder puts a file reference on the pasteboard. Read that reference before
+  // asking macOS to coerce the clipboard to PNG; coercing a copied file returns
+  // its Finder icon/preview instead of the contents of the image file.
+  if (process.platform === 'darwin') {
+    try {
+      const { execFileSync } = require('child_process');
+      const script = [
+        "ObjC.import('AppKit');",
+        'function run() {',
+        '  const pasteboard = $.NSPasteboard.generalPasteboard;',
+        '  const result = { path: "", types: ObjC.deepUnwrap(pasteboard.types) || [] };',
+        '  try {',
+        '    const classes = $.NSArray.arrayWithObject($.NSURL);',
+        '    const options = $.NSDictionary.dictionaryWithObjectForKey(',
+        '      $.NSNumber.numberWithBool(true),',
+        '      $.NSPasteboardURLReadingFileURLsOnlyKey',
+        '    );',
+        '    const urls = pasteboard.readObjectsForClassesOptions(classes, options);',
+        '    if (urls && urls.count > 0) {',
+        '      const url = urls.objectAtIndex(0);',
+        '      const pathUrl = url.filePathURL;',
+        '      result.path = ObjC.unwrap((pathUrl || url).path);',
+        '    }',
+        '  } catch (_) {}',
+        '  if (!result.path) {',
+        "    const fileUrl = pasteboard.stringForType('public.file-url');",
+        '    if (fileUrl) {',
+        '      const url = $.NSURL.URLWithString(fileUrl);',
+        '      const pathUrl = url ? url.filePathURL : null;',
+        '      result.path = pathUrl ? ObjC.unwrap(pathUrl.path) : ObjC.unwrap(fileUrl);',
+        '    }',
+        '  }',
+        '  if (!result.path) {',
+        "    const fileUrlData = pasteboard.dataForType('public.file-url');",
+        '    if (fileUrlData) {',
+        '      const fileUrlText = $.NSString.alloc.initWithDataEncoding(fileUrlData, $.NSUTF8StringEncoding);',
+        '      if (fileUrlText) {',
+        '        const url = $.NSURL.URLWithString(fileUrlText);',
+        '        const pathUrl = url ? url.filePathURL : null;',
+        '        result.path = pathUrl ? ObjC.unwrap(pathUrl.path) : ObjC.unwrap(fileUrlText);',
+        '      }',
+        '    }',
+        '  }',
+        '  if (!result.path) {',
+        "    const fileNames = pasteboard.propertyListForType('NSFilenamesPboardType');",
+        '    if (fileNames && fileNames.count > 0) result.path = ObjC.unwrap(fileNames.objectAtIndex(0));',
+        '  }',
+        '  return JSON.stringify(result);',
+        '}',
+      ].join('\n');
+      const rawResult = execFileSync('osascript', ['-l', 'JavaScript', '-e', script], { encoding: 'utf8' }).trim();
+      const pasteboardResult = JSON.parse(rawResult) as { path?: string; types?: string[] };
+      const types = pasteboardResult.types || [];
+      log(`Clipboard types: ${types.join(', ') || '(none)'}`, 'info');
+
+      let fileUrl = pasteboardResult.path || '';
+      if (!fileUrl) {
+        const appleScript = [
+          'try',
+          'set fileUrl to the clipboard as «class furl»',
+          'return POSIX path of fileUrl',
+          'on error',
+          'return ""',
+          'end try',
+        ].join('\n');
+        fileUrl = execFileSync('osascript', ['-e', appleScript], { encoding: 'utf8' }).trim();
+      }
+
+      const filePath = fileUrl.startsWith('file:') ? vscode.Uri.parse(fileUrl).fsPath : fileUrl;
+      if (filePath && fs.existsSync(filePath) && isImageFile(filePath)) {
+        log(`Using copied image file: ${path.basename(filePath)}`, 'info');
+        return { filePath, containsFileReference: true };
+      }
+      if (fileUrl) {
+        log(`Clipboard contains a file, but it is not a supported image: ${fileUrl}`, 'error');
+      }
+
+      const containsFileReference = types.some(type => /file-url|filenames|finder|promised-file/i.test(type));
+      if (containsFileReference) {
+        return { filePath: null, containsFileReference: true };
+      }
+    } catch (error) {
+      log(`Unable to read clipboard file reference: ${error}`, 'error');
+    }
+  }
+
+  // Also support a path copied as plain text on every platform.
+  const clipboardText = (await vscode.env.clipboard.readText()).trim();
+  if (clipboardText && fs.existsSync(clipboardText) && isImageFile(clipboardText)) {
+    log(`Using image path from clipboard text: ${path.basename(clipboardText)}`, 'info');
+    return { filePath: clipboardText, containsFileReference: true };
+  }
+
+  return { filePath: null, containsFileReference: false };
+}
+
 class EzImageDropProvider implements vscode.DocumentDropEditProvider {
   async provideDocumentDropEdits(document: vscode.TextDocument, position: vscode.Position, dataTransfer: vscode.DataTransfer): Promise<vscode.DocumentDropEdit | undefined> {
     const editor = vscode.window.activeTextEditor;
@@ -250,18 +352,23 @@ export function activate(context: vscode.ExtensionContext) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) return;
 
-    const tempPath = await saveClipboardImage();
-    if (tempPath) {
-      await uploadAndInsert(tempPath, editor, true);
-    } else {
-      // Try to see if clipboard has a file path
-      const clipboard = await vscode.env.clipboard.readText();
-      if (clipboard && fs.existsSync(clipboard) && isImageFile(clipboard)) {
-        await uploadAndInsert(clipboard, editor);
-      } else {
-        vscode.window.showErrorMessage('No image found in clipboard');
-      }
+    const clipboardFile = await getClipboardImageFilePath();
+    if (clipboardFile.filePath) {
+      await uploadAndInsert(clipboardFile.filePath, editor);
+      return;
     }
+    if (clipboardFile.containsFileReference) {
+      vscode.window.showErrorMessage('EzImage found a copied file but could not read it as a supported image. See Output > EzImage for clipboard details.');
+      return;
+    }
+
+    const tempPath = await saveClipboardImage();
+    if (!tempPath) {
+      vscode.window.showErrorMessage('No image found in clipboard');
+      return;
+    }
+
+    await uploadAndInsert(tempPath, editor, true);
   });
 
   const uploadFileCmd = vscode.commands.registerCommand('ezimage.uploadFile', async () => {

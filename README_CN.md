@@ -4,7 +4,7 @@
   <p><b>为 VS Code & AI-first IDEs 打造的极简、高效、支持多平台的图床上传插件</b></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.0.1-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.2-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
@@ -61,11 +61,11 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 
 | IDE / Environment | 命令行指令 |
 | :--- | :--- |
-| **VS Code** | `code --install-extension ezimage-1.0.0.vsix` |
-| **Antigravity** | `antigravity --install-extension ezimage-1.0.0.vsix` |
-| **Cursor** | `cursor --install-extension ezimage-1.0.0.vsix` |
-| **Windsurf** | `windsurf --install-extension ezimage-1.0.0.vsix` |
-| **Trae** | `trae --install-extension ezimage-1.0.0.vsix` |
+| **VS Code** | `code --install-extension ezimage-1.0.2.vsix` |
+| **Antigravity** | `antigravity --install-extension ezimage-1.0.2.vsix` |
+| **Cursor** | `cursor --install-extension ezimage-1.0.2.vsix` |
+| **Windsurf** | `windsurf --install-extension ezimage-1.0.2.vsix` |
+| **Trae** | `trae --install-extension ezimage-1.0.2.vsix` |
 
 ### 方式 B：从 Marketplace
 

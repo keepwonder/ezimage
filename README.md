@@ -4,7 +4,7 @@
   <p><b>A Minimalist, Efficient Multi-Platform Image Uploader for VS Code & AI-first IDEs</b></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.0.1-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.2-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
@@ -61,11 +61,11 @@ EzImage not only supports standard **VS Code**, but also perfectly adapts to cur
 
 | IDE / Environment | Command |
 | :--- | :--- |
-| **VS Code** | `code --install-extension ezimage-1.0.0.vsix` |
-| **Antigravity** | `antigravity --install-extension ezimage-1.0.0.vsix` |
-| **Cursor** | `cursor --install-extension ezimage-1.0.0.vsix` |
-| **Windsurf** | `windsurf --install-extension ezimage-1.0.0.vsix` |
-| **Trae** | `trae --install-extension ezimage-1.0.0.vsix` |
+| **VS Code** | `code --install-extension ezimage-1.0.2.vsix` |
+| **Antigravity** | `antigravity --install-extension ezimage-1.0.2.vsix` |
+| **Cursor** | `cursor --install-extension ezimage-1.0.2.vsix` |
+| **Windsurf** | `windsurf --install-extension ezimage-1.0.2.vsix` |
+| **Trae** | `trae --install-extension ezimage-1.0.2.vsix` |
 
 ### Method B: From Marketplace
 
