@@ -84,6 +84,11 @@ jobs:
         run: npx --yes @vscode/vsce package --no-git-tag-version --out ezimage-vsce.vsix
 
       - name: Smoke-test vsce-packaged VSIX
+        # Skip on Windows: this step uses unix shell idioms (mkdir -p /tmp,
+        # unzip from PATH) that don't work in the default pwsh shell. The
+        # Python smoke test above already runs on every OS and verifies
+        # the same thing cross-platform.
+        if: matrix.os != 'windows-latest'
         run: |
           mkdir -p /tmp/vsix-extract
           unzip -q ezimage-vsce.vsix -d /tmp/vsix-extract

@@ -50,9 +50,14 @@ jobs:
 
       - name: Smoke-test packaged VSIX
         run: |
-          mkdir -p /tmp/vsix-extract
-          unzip -q "ezimage-${{ steps.meta.outputs.version }}.vsix" -d /tmp/vsix-extract
-          cd /tmp/vsix-extract/extension
+          # ${{ runner.temp }} resolves to a per-run temp dir that works on
+          # all runners (Ubuntu: /tmp, macOS: /var/folders/..., Windows:
+          # C:\Users\...\AppData\Local\Temp). Avoids hard-coding /tmp which
+          # only exists on Linux.
+          EXTRACT_DIR="${{ runner.temp }}/vsix-extract"
+          mkdir -p "$EXTRACT_DIR"
+          unzip -q "ezimage-${{ steps.meta.outputs.version }}.vsix" -d "$EXTRACT_DIR"
+          cd "$EXTRACT_DIR/extension"
           node -e "const s = require('@aws-sdk/client-s3'); if (typeof s.S3Client !== 'function') process.exit(1); console.log('S3Client ok')"
 
       - name: Extract release notes from CHANGELOG.md
