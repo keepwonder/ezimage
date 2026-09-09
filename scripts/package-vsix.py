@@ -11,6 +11,7 @@ Usage:
   python3 scripts/package-vsix.py [<output.vsix>]
   python3 scripts/package-vsix.py --verify [<output.vsix>]
 """
+import io
 import os
 import shutil
 import subprocess
@@ -18,6 +19,14 @@ import sys
 import tempfile
 import zipfile
 from pathlib import Path
+
+# Force UTF-8 on stdout/stderr so non-ASCII characters (✓, ✗, emoji, Chinese
+# in error messages) don't crash on Windows where the default codepage is
+# cp1252. See https://docs.python.org/3/library/sys.html#sys.stdout
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
