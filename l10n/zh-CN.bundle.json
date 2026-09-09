@@ -29,8 +29,6 @@
   "prompt.chooseFormat.placeholder": "本次上传插入为…",
   "prompt.chooseFormat.markdown.label": "Markdown",
   "prompt.chooseFormat.markdown.description": "![alt](url)",
-  "prompt.chooseFormat.htmlCenter.label": "HTML 居中",
-  "prompt.chooseFormat.htmlCenter.description": "<div align=\"center\"><img …></div>",
   "prompt.chooseFormat.htmlFigure.label": "HTML <figure>",
   "prompt.chooseFormat.htmlFigure.description": "<figure><img><figcaption></figure>",
   "sharp.notInstalled.title": "EzImage: 智能压缩引擎 (sharp) 未安装，无法转换 WebP/压缩图片。要现在自动安装吗？",

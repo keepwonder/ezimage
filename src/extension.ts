@@ -87,7 +87,7 @@ function getSettings(): EzImageSettings {
     maxWidth: config.get<number>('maxWidth') || 1920,
     quality: config.get<number>('quality') || 85,
     insert: {
-      format: (config.get<'markdown' | 'html-wrap' | 'html-figure' | 'custom' | 'html-center'>('insertFormat') ?? 'markdown'),
+      format: (config.get<'markdown' | 'html-wrap' | 'html-figure' | 'custom'>('insertFormat') ?? 'markdown'),
       width: config.get<string>('insertWidth') ?? '100%',
       align: (config.get<'none' | 'left' | 'center' | 'right'>('insertAlign') ?? 'none'),
       customTemplate: config.get<string>('insertCustomTemplate') ?? '',

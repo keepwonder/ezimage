@@ -102,15 +102,12 @@ interface PresetRenderVars {
  * Render one of the three built-in formats.
  *
  * `align` and `width` are **independent**:
- *   - `align` decides whether to wrap in <div> (html-wrap) and what value.
+ *   - `align` decides whether to wrap in <div> and what value.
  *     `align: none` means NO wrapper at all — just the bare <img>.
  *   - `width` only emits a `width="..."` attribute when non-empty.
  *
  * This means a user can pick html-wrap + align=none to get a bare img
  * with a width attribute but no centering wrapper.
- *
- * `html-center` is accepted as a deprecated alias for `html-wrap` —
- * preserved so existing user settings don't break.
  */
 export type RenderablePreset = Exclude<InsertFormat, 'custom'>;
 
@@ -121,8 +118,7 @@ export function renderPreset(format: RenderablePreset, v: PresetRenderVars): str
         case 'markdown':
             return `![${v.alt}](${v.url})`;
 
-        case 'html-wrap':
-        case 'html-center': {  // deprecated alias
+        case 'html-wrap': {
             const img = `<img src="${escapeAttr(v.url)}" alt="${escapeAttr(v.alt)}"${widthAttr}>`;
             if (v.align === 'none') return img;
             // left / center / right all emit the wrapper, just with
@@ -253,12 +249,11 @@ export function findUnknownVariables(template: string): string[] {
 
 /**
  * Helper used by the package.json enum contribution to keep it in sync.
- *
- * `html-center` is included as a deprecated alias for `html-wrap` so
- * users with old settings files don't see a validation error in VS Code.
+/**
+ * Helper used by the package.json enum contribution to keep it in sync.
  */
 export const INSERT_FORMAT_VALUES: readonly InsertFormat[] = [
-    'markdown', 'html-wrap', 'html-figure', 'custom', 'html-center',
+    'markdown', 'html-wrap', 'html-figure', 'custom',
 ] as const;
 
 export const INSERT_ALIGN_VALUES: readonly InsertAlign[] = [

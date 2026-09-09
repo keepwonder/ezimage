@@ -122,15 +122,13 @@
             "markdown",
             "html-wrap",
             "html-figure",
-            "custom",
-            "html-center"
+            "custom"
           ],
           "enumDescriptions": [
             "`![alt](url)` — plain Markdown image.",
             "`<img>` wrapped in `<div align=\"…\">`. `align` is controlled by `ezimage.insertAlign`; `none` drops the wrapper.",
             "Semantic `<figure>` with `<figcaption>`. `align` is ignored — use `html-wrap` if you need alignment.",
-            "Use your own template (see `ezimage.insertCustomTemplate`).",
-            "Deprecated alias for `html-wrap`."
+            "Use your own template (see `ezimage.insertCustomTemplate`)."
           ],
           "default": "markdown",
           "markdownDescription": "## 📝 Insert format\n\nHow the upload appears in your Markdown document. See the README §Insert format templates for the full variable list."

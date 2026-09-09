@@ -263,31 +263,3 @@ test('renderInsert html-wrap + align=center renders the wrapper', () => {
     assert.match(out, /^<div align="center">/);
     assert.match(out, /<img /);
 });
-
-// ---------------------------------------------------------------------------
-// Deprecated alias: html-center is still accepted
-// ---------------------------------------------------------------------------
-test('html-center is accepted as a deprecated alias for html-wrap', () => {
-    const wrap = renderPreset('html-wrap', { ...photoPreset, align: 'center', width: '100%' });
-    const center = renderPreset('html-center', { ...photoPreset, align: 'center', width: '100%' });
-    assert.equal(center, wrap);
-});
-
-test('html-center alias respects align=none (drops wrapper)', () => {
-    const center = renderPreset('html-center', { ...photoPreset, align: 'none', width: '100%' });
-    assert.equal(
-        center,
-        '<img src="https://pub.example.com/2026/09/photo-abc123.webp" alt="photo" width="100%">'
-    );
-});
-
-test('DEPRECATED_FORMAT_ALIASES maps html-center to html-wrap', () => {
-    const { DEPRECATED_FORMAT_ALIASES } = require(path.join(__dirname, '..', 'out', 'types.js'));
-    assert.equal(DEPRECATED_FORMAT_ALIASES['html-center'], 'html-wrap');
-});
-
-test('CANONICAL_INSERT_FORMATS does not include html-center', () => {
-    const { CANONICAL_INSERT_FORMATS } = require(path.join(__dirname, '..', 'out', 'types.js'));
-    assert.ok(!CANONICAL_INSERT_FORMATS.includes('html-center'));
-    assert.ok(CANONICAL_INSERT_FORMATS.includes('html-wrap'));
-});

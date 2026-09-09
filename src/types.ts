@@ -23,24 +23,14 @@ export interface IUploader {
  *                `align` is intentionally ignored (figure alignment is
  *                CSS, not an attribute).
  * - `custom`    : user-supplied template string (see insertCustomTemplate).
- *
- * `html-center` was renamed to `html-wrap` in 1.0.4 because the preset is
- * no longer hard-coded to center alignment. The old value is still
- * accepted as an alias and produces the same output as `html-wrap`, but
- * new settings should use the canonical name.
  */
-export type InsertFormat = 'markdown' | 'html-wrap' | 'html-figure' | 'custom' | 'html-center';
+export type InsertFormat = 'markdown' | 'html-wrap' | 'html-figure' | 'custom';
 export type InsertAlign = 'none' | 'left' | 'center' | 'right';
 
 /** Canonical enum used for settings UI and validation. */
-export const CANONICAL_INSERT_FORMATS: readonly Exclude<InsertFormat, 'html-center'>[] = [
+export const CANONICAL_INSERT_FORMATS: readonly InsertFormat[] = [
     'markdown', 'html-wrap', 'html-figure', 'custom',
 ] as const;
-
-/** Map deprecated preset names to their canonical replacement. */
-export const DEPRECATED_FORMAT_ALIASES: Readonly<Record<string, Exclude<InsertFormat, 'html-center'>>> = {
-    'html-center': 'html-wrap',
-};
 
 export interface InsertTemplateSettings {
     /** Which preset template to render. `'custom'` reads `customTemplate`. */
@@ -103,6 +93,4 @@ export const PRESET_TEMPLATES: Readonly<Record<Exclude<InsertFormat, 'custom'>, 
     'markdown':     '![{alt}]({url})',
     'html-wrap':    '<div align="{align}"><img src="{url}" alt="{alt}" width="{width}"></div>',
     'html-figure':  '<figure><img src="{url}" alt="{alt}" width="{width}"><figcaption>{alt}</figcaption></figure>',
-    // Deprecated alias — same output as html-wrap.
-    'html-center':  '<div align="{align}"><img src="{url}" alt="{alt}" width="{width}"></div>',
 };

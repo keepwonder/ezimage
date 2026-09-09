@@ -31,8 +31,6 @@
   "prompt.chooseFormat.placeholder": "Insert this upload as…",
   "prompt.chooseFormat.markdown.label": "Markdown",
   "prompt.chooseFormat.markdown.description": "![alt](url)",
-  "prompt.chooseFormat.htmlCenter.label": "HTML Centered",
-  "prompt.chooseFormat.htmlCenter.description": "<div align=\"center\"><img …></div>",
   "prompt.chooseFormat.htmlFigure.label": "HTML <figure>",
   "prompt.chooseFormat.htmlFigure.description": "<figure><img><figcaption></figure>",
   "sharp.notInstalled.title": "EzImage: intelligent compression engine (sharp) is not installed, so WebP conversion and image compression are unavailable. Install it now?",
