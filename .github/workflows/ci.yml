@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build & Verify (${{ matrix.os }}, Node ${{ matrix.node-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Cover the platforms users actually run VS Code on. Each cell exercises
+        # the full pipeline: type check, compile, package, smoke test.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [20]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit
+
+      - name: Compile
+        run: npm run compile
+
+      # 1) Local Python packager (fast preview + smoke test)
+      - name: Package VSIX (Python) + smoke test
+        run: python3 scripts/package-vsix.py --verify ezimage-local.vsix
+
+      - name: Upload local-packaged VSIX artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ezimage-vsix-local
+          path: ezimage-local.vsix
+          if-no-files-found: error
+          retention-days: 7
+
+      # 2) Real @vscode/vsce packaging (the canonical source of truth for
+      #    marketplace submission). This catches any divergence between our
+      #    Python ignore parser and the official one.
+      - name: Package VSIX (real vsce)
+        run: npx --yes @vscode/vsce package --no-git-tag-version --out ezimage-vsce.vsix
+
+      - name: Smoke-test vsce-packaged VSIX
+        run: |
+          mkdir -p /tmp/vsix-extract
+          unzip -q ezimage-vsce.vsix -d /tmp/vsix-extract
+          cd /tmp/vsix-extract/extension
+          node -e "const s = require('@aws-sdk/client-s3'); if (typeof s.S3Client !== 'function') process.exit(1); console.log('vsce-packaged VSIX: S3Client ok');"
+
+      - name: Compare VSIX sizes (sanity check)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          LOCAL_MB=$(stat -c %s ezimage-local.vsix 2>/dev/null || stat -f %z ezimage-local.vsix)
+          LOCAL_MB=$(awk "BEGIN { printf \"%.2f\", ${LOCAL_MB}/1024/1024 }")
+          echo "Local Python-packaged VSIX: ${LOCAL_MB} MB"
+
+          VSCE_MB=$(stat -c %s ezimage-vsce.vsix 2>/dev/null || stat -f %z ezimage-vsce.vsix)
+          VSCE_MB=$(awk "BEGIN { printf \"%.2f\", ${VSCE_MB}/1024/1024 }")
+          echo "Official vsce-packaged VSIX: ${VSCE_MB} MB"
+
+          # Local should be within 50% of vsce (allowing for the synthetic
+          # extension.vsixmanifest we inject vs the real one vsce generates)
+          echo "Delta: ${LOCAL_MB} vs ${VSCE_MB} MB"
+
+      - name: Upload vsce-packaged VSIX artifact
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ezimage-vsix-vsce
+          path: ezimage-vsce.vsix
+          if-no-files-found: error
+          retention-days: 7
+
+      # 3) Regression guard: VSIX size must stay under 5 MB
+      - name: Size regression check
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          VSIX_SIZE=$(stat -c %s ezimage-vsce.vsix 2>/dev/null || stat -f %z ezimage-vsce.vsix)
+          VSIX_MB=$(awk "BEGIN { printf \"%.2f\", ${VSIX_SIZE}/1024/1024 }")
+          echo "VSIX size: ${VSIX_MB} MB"
+          if [ "$(awk "BEGIN { print (${VSIX_MB} > 5) }")" = "1" ]; then
+            echo "::error::VSIX is ${VSIX_MB} MB, expected < 5 MB. .vscodeignore likely regressed."
+            exit 1
+          fi

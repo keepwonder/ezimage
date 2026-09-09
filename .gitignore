@@ -5,3 +5,8 @@ node_modules
 .DS_Store
 npm-debug.log
 yarn-error.log
+
+# Local tooling caches
+.npm-cache/
+__pycache__/
+*.pyc

@@ -11,8 +11,10 @@
   },
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.74.0",
+    "node": ">=18.17.0"
   },
+  "extensionDependencies": [],
   "categories": [
     "Other"
   ],
@@ -96,6 +98,16 @@
           "type": "number",
           "default": 85,
           "description": "JPEG quality for compression (1-100)"
+        },
+        "ezimage.autoInstallSharp": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-install the sharp native dependency on first use when missing (requires Node.js + npm on PATH)"
+        },
+        "ezimage.disableCompressionNotice": {
+          "type": "boolean",
+          "default": false,
+          "description": "Suppress the warning shown when the sharp compression engine is unavailable"
         }
       }
     },
@@ -123,18 +135,28 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run verify && npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "watch": "tsc -watch -p ./",
+    "verify": "python3 scripts/package-vsix.py --verify ezimage-dev.vsix && rm -f ezimage-dev.vsix",
+    "package": "npm run compile && python3 scripts/package-vsix.py --verify ezimage-dev.vsix",
+    "vsce:package": "npm run compile && npx --yes @vscode/vsce package --no-git-tag-version",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:dry": "standard-version --dry-run"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.74.0",
     "esbuild": "^0.27.3",
+    "standard-version": "^9.5.0",
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.450.0",
+    "@aws-sdk/client-s3": "^3.450.0"
+  },
+  "optionalDependencies": {
     "sharp": "^0.33.0"
   }
 }

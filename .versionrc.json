@@ -1,0 +1,23 @@
+{
+  "types": [
+    { "type": "feat", "section": "✨ Features" },
+    { "type": "fix", "section": "🐛 Bug Fixes" },
+    { "type": "perf", "section": "⚡ Performance" },
+    { "type": "refactor", "section": "♻️ Refactors" },
+    { "type": "docs", "section": "📚 Documentation" },
+    { "type": "build", "section": "📦 Build System" },
+    { "type": "ci", "section": "🔧 Continuous Integration" },
+    { "type": "test", "section": "✅ Tests" },
+    { "type": "chore", "hidden": true },
+    { "type": "style", "hidden": true }
+  ],
+  "releaseCommitMessageFormat": "chore(release): {{currentTag}}",
+  "tagPrefix": "v",
+  "skip": {
+    "commit": false,
+    "tag": true,
+    "changelog": false
+  },
+  "infile": "CHANGELOG.md",
+  "header": "# Changelog\n\nAll notable changes to EzImage are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."
+}
