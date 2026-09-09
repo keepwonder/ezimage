@@ -87,7 +87,7 @@ function getSettings(): EzImageSettings {
     maxWidth: config.get<number>('maxWidth') || 1920,
     quality: config.get<number>('quality') || 85,
     insert: {
-      format: (config.get<'markdown' | 'html-center' | 'html-figure' | 'custom'>('insertFormat') ?? 'markdown'),
+      format: (config.get<'markdown' | 'html-wrap' | 'html-figure' | 'custom' | 'html-center'>('insertFormat') ?? 'markdown'),
       width: config.get<string>('insertWidth') ?? '100%',
       align: (config.get<'none' | 'left' | 'center' | 'right'>('insertAlign') ?? 'none'),
       customTemplate: config.get<string>('insertCustomTemplate') ?? '',
@@ -737,7 +737,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const formatChoices: { label: string; value: InsertFormat; description: string }[] = [
       { label: t('prompt.chooseFormat.markdown.label'),     value: 'markdown',     description: t('prompt.chooseFormat.markdown.description') },
-      { label: t('prompt.chooseFormat.htmlCenter.label'),  value: 'html-center',  description: t('prompt.chooseFormat.htmlCenter.description') },
+      { label: t('prompt.chooseFormat.htmlWrap.label'),    value: 'html-wrap',    description: t('prompt.chooseFormat.htmlWrap.description') },
       { label: t('prompt.chooseFormat.htmlFigure.label'),  value: 'html-figure',  description: t('prompt.chooseFormat.htmlFigure.description') },
     ];
     const picked = await vscode.window.showQuickPick(formatChoices, {

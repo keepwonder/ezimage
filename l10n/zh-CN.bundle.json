@@ -5,26 +5,19 @@
     "",
     "占位符语法：{0}、{1} … 依次对应 t(key, ...) 调用时的参数。"
   ],
-
   "ezimage.l10n.locale": "zh-CN",
-
   "config.language.description": "EzImage 弹窗、错误、提示信息的显示语言。\"auto\" 跟随 VS Code 的界面语言。",
-
   "cmd.uploadClipboard.title": "上传剪贴板图片",
   "cmd.uploadClipboardAs.title": "上传剪贴板图片为…",
   "cmd.uploadClipboardAs.description": "为本次上传选择插入格式（Markdown / HTML 居中 / HTML figure）。",
   "cmd.uploadFile.title": "上传图片文件",
   "cmd.configure.title": "配置 EzImage",
-
   "menu.uploadClipboard.context": "上传剪贴板图片",
   "menu.uploadFile.context": "上传图片文件",
-
   "keybinding.uploadClipboard.mac": "cmd+alt+v",
   "keybinding.uploadClipboard.other": "ctrl+alt+v",
-
   "info.uploaded": "上传成功！",
   "info.uploading": "EzImage: 正在上传 {0}…",
-
   "error.noEditor": "没有打开的 Markdown 编辑器，请先打开一个 .md 文件。",
   "error.noImage": "剪贴板没有找到图片",
   "error.invalidFile": "EzImage 找到了复制的文件，但无法识别为支持的图片格式。详情请看「输出 → EzImage」。",
@@ -32,7 +25,6 @@
   "error.configMissing": "EzImage: {0}",
   "error.configAction": "去配置",
   "error.invalidTemplate": "插入模板里有未知占位符：{0}",
-
   "prompt.chooseFormat.title": "EzImage: 选择插入格式",
   "prompt.chooseFormat.placeholder": "本次上传插入为…",
   "prompt.chooseFormat.markdown.label": "Markdown",
@@ -41,25 +33,19 @@
   "prompt.chooseFormat.htmlCenter.description": "<div align=\"center\"><img …></div>",
   "prompt.chooseFormat.htmlFigure.label": "HTML <figure>",
   "prompt.chooseFormat.htmlFigure.description": "<figure><img><figcaption></figure>",
-
   "sharp.notInstalled.title": "EzImage: 智能压缩引擎 (sharp) 未安装，无法转换 WebP/压缩图片。要现在自动安装吗？",
   "sharp.notInstalled.source": "来源: EzImage",
   "sharp.notInstalled.install": "立即安装",
   "sharp.notInstalled.skip": "跳过（使用原图上传）",
   "sharp.notInstalled.dismiss": "不再提示",
-
   "sharp.installFailed.title": "EzImage: sharp 安装失败，本次将以原图上传。详情请看「输出 → EzImage」。",
   "sharp.installFailed.action": "查看日志",
-
   "sharp.notInstalled.dismissConfirmed": "已关闭自动安装。后续可以在设置中把 `ezimage.autoInstallSharp` 改回 true 重新启用。",
-
   "sharp.notInstalled.abiMismatch.title": "EzImage: 已检测到 sharp，但加载失败（可能是 Electron/Node ABI 不匹配）。本次将以原图上传。详情请看「输出 → EzImage」。",
   "sharp.notInstalled.abiMismatch.action": "查看日志",
   "sharp.notInstalled.abiMismatch.dismiss": "不再提示",
-
   "sharp.reloadAfterInstall.title": "EzImage: sharp 安装成功。请重启窗口以激活它。",
   "sharp.reloadAfterInstall.action": "重启窗口",
-
   "log.compressionReady": "智能压缩引擎就绪 (sharp {0})。",
   "log.compressionUnavailable": "智能压缩引擎不可用：{0}",
   "log.compressionWillFallback": "EzImage 在 sharp 安装前会回退到上传原图。",
@@ -77,5 +63,7 @@
   "log.sharpInstallProxyHint": "提示：npm registry 拒绝了请求。这通常意味着公司代理拦截了请求——可以设置 NPM_CONFIG_REGISTRY 环境变量试试。",
   "log.sharpInstallSucceeded": "sharp 安装成功。需要重启窗口才能生效。",
   "log.sharpCheckVersion": "检查 npm --version",
-  "log.nodeVersionPrompt": "请确认 `npm --version` 在你的 shell 里能正常运行，然后重试。"
+  "log.nodeVersionPrompt": "请确认 `npm --version` 在你的 shell 里能正常运行，然后重试。",
+  "prompt.chooseFormat.htmlWrap.label": "HTML 包裹",
+  "prompt.chooseFormat.htmlWrap.description": "<div align=\"…\"><img …></div>"
 }

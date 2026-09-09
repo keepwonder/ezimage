@@ -7,26 +7,19 @@
     "Each value uses {0}, {1}, ... placeholders for runtime interpolation.",
     "Keys follow the pattern: <surface>.<feature>.<variant>."
   ],
-
   "ezimage.l10n.locale": "en",
-
   "config.language.description": "Display language for EzImage prompts, errors, and info messages. \"auto\" follows VS Code's display language.",
-
   "cmd.uploadClipboard.title": "Upload Clipboard Image",
   "cmd.uploadClipboardAs.title": "Upload Clipboard Image As…",
   "cmd.uploadClipboardAs.description": "Pick the insert format (Markdown / HTML center / HTML figure) for this upload only.",
   "cmd.uploadFile.title": "Upload Image File",
   "cmd.configure.title": "Configure Settings",
-
   "menu.uploadClipboard.context": "Upload Clipboard Image",
   "menu.uploadFile.context": "Upload Image File",
-
   "keybinding.uploadClipboard.mac": "cmd+alt+v",
   "keybinding.uploadClipboard.other": "ctrl+alt+v",
-
   "info.uploaded": "Uploaded successfully!",
   "info.uploading": "EzImage: Uploading {0}…",
-
   "error.noEditor": "No active Markdown editor. Open a .md file first.",
   "error.noImage": "No image found in clipboard",
   "error.invalidFile": "EzImage found a copied file but could not read it as a supported image. See Output > EzImage for clipboard details.",
@@ -34,7 +27,6 @@
   "error.configMissing": "EzImage: {0}",
   "error.configAction": "Configure",
   "error.invalidTemplate": "Insert template has unknown placeholders: {0}",
-
   "prompt.chooseFormat.title": "EzImage: Choose insert format",
   "prompt.chooseFormat.placeholder": "Insert this upload as…",
   "prompt.chooseFormat.markdown.label": "Markdown",
@@ -43,25 +35,19 @@
   "prompt.chooseFormat.htmlCenter.description": "<div align=\"center\"><img …></div>",
   "prompt.chooseFormat.htmlFigure.label": "HTML <figure>",
   "prompt.chooseFormat.htmlFigure.description": "<figure><img><figcaption></figure>",
-
   "sharp.notInstalled.title": "EzImage: intelligent compression engine (sharp) is not installed, so WebP conversion and image compression are unavailable. Install it now?",
   "sharp.notInstalled.source": "Source: EzImage",
   "sharp.notInstalled.install": "Install now",
   "sharp.notInstalled.skip": "Skip (upload original)",
   "sharp.notInstalled.dismiss": "Don't ask again",
-
   "sharp.installFailed.title": "EzImage: sharp installation failed. The image will be uploaded as-is. See Output > EzImage for details.",
   "sharp.installFailed.action": "View log",
-
   "sharp.notInstalled.dismissConfirmed": "Auto-install has been turned off. You can re-enable it via `ezimage.autoInstallSharp` in settings.",
-
   "sharp.notInstalled.abiMismatch.title": "EzImage: sharp is installed but failed to load (likely an Electron/Node ABI mismatch). The image will be uploaded as-is. See Output > EzImage for details.",
   "sharp.notInstalled.abiMismatch.action": "View log",
   "sharp.notInstalled.abiMismatch.dismiss": "Don't ask again",
-
   "sharp.reloadAfterInstall.title": "EzImage: sharp installed successfully. Reload the window to activate it.",
   "sharp.reloadAfterInstall.action": "Reload window",
-
   "log.compressionReady": "Compression engine ready (sharp {0}).",
   "log.compressionUnavailable": "Compression engine unavailable: {0}",
   "log.compressionWillFallback": "EzImage will fall back to uploading the original image until sharp is installed.",
@@ -79,5 +65,7 @@
   "log.sharpInstallProxyHint": "Hint: the npm registry rejected the package. This usually means a corporate proxy intercepted the request — try setting NPM_CONFIG_REGISTRY explicitly.",
   "log.sharpInstallSucceeded": "sharp installed successfully. User must reload the window for it to take effect.",
   "log.sharpCheckVersion": "npm --version",
-  "log.nodeVersionPrompt": "Check that `npm --version` works in your shell, then retry."
+  "log.nodeVersionPrompt": "Check that `npm --version` works in your shell, then retry.",
+  "prompt.chooseFormat.htmlWrap.label": "HTML Wrap",
+  "prompt.chooseFormat.htmlWrap.description": "<div align=\"…\"><img …></div>"
 }

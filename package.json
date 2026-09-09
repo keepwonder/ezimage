@@ -120,15 +120,17 @@
           "type": "string",
           "enum": [
             "markdown",
-            "html-center",
+            "html-wrap",
             "html-figure",
-            "custom"
+            "custom",
+            "html-center"
           ],
           "enumDescriptions": [
             "Plain Markdown image: ![alt](url)",
-            "Centered HTML <img> wrapped in <div align=\"center\">",
-            "Semantic HTML5 <figure> with <figcaption>",
-            "Use your own template (ezimage.insertCustomTemplate)"
+            "HTML <img> wrapped in <div align=\"…\"> (align from ezimage.insertAlign; 'none' drops the wrapper)",
+            "Semantic HTML5 <figure> with <figcaption> (align is ignored — use a <div> wrapper if you need alignment)",
+            "Use your own template (ezimage.insertCustomTemplate)",
+            "Deprecated alias for html-wrap, kept for backward compatibility"
           ],
           "default": "markdown",
           "description": "How to render the image snippet that gets inserted into the editor"

@@ -12,8 +12,35 @@ export interface IUploader {
     upload(options: UploadOptions): Promise<UploadResult>;
 }
 
-export type InsertFormat = 'markdown' | 'html-center' | 'html-figure' | 'custom';
+/**
+ * Insert format presets.
+ *
+ * - `markdown`  : `![alt](url)` — plain Markdown image.
+ * - `html-wrap` : `<div align="..."><img></div>` — HTML with a wrapper that
+ *                respects the `align` setting. `align: 'none'` drops the
+ *                wrapper and emits a bare `<img>`.
+ * - `html-figure`: `<figure><img><figcaption></figure>` — semantic HTML5;
+ *                `align` is intentionally ignored (figure alignment is
+ *                CSS, not an attribute).
+ * - `custom`    : user-supplied template string (see insertCustomTemplate).
+ *
+ * `html-center` was renamed to `html-wrap` in 1.0.4 because the preset is
+ * no longer hard-coded to center alignment. The old value is still
+ * accepted as an alias and produces the same output as `html-wrap`, but
+ * new settings should use the canonical name.
+ */
+export type InsertFormat = 'markdown' | 'html-wrap' | 'html-figure' | 'custom' | 'html-center';
 export type InsertAlign = 'none' | 'left' | 'center' | 'right';
+
+/** Canonical enum used for settings UI and validation. */
+export const CANONICAL_INSERT_FORMATS: readonly Exclude<InsertFormat, 'html-center'>[] = [
+    'markdown', 'html-wrap', 'html-figure', 'custom',
+] as const;
+
+/** Map deprecated preset names to their canonical replacement. */
+export const DEPRECATED_FORMAT_ALIASES: Readonly<Record<string, Exclude<InsertFormat, 'html-center'>>> = {
+    'html-center': 'html-wrap',
+};
 
 export interface InsertTemplateSettings {
     /** Which preset template to render. `'custom'` reads `customTemplate`. */
@@ -60,9 +87,22 @@ export const TEMPLATE_VARIABLES = [
 
 export type TemplateVariable = typeof TEMPLATE_VARIABLES[number];
 
-/** Built-in templates. Order matches the `insertFormat` enum. */
-export const PRESET_TEMPLATES: Record<Exclude<InsertFormat, 'custom'>, string> = {
+/**
+ * Legacy string templates, kept only for documentation / migration. The
+ * real rendering now happens in `renderPreset()` so we can drop empty
+ * attributes and skip the `<div>` wrapper when align is `none`.
+ *
+ * Note: these strings match the html-wrap rendering when `align=center`,
+ * `width:100%` — they show the most common case, not all combinations.
+ * For accurate per-case output see renderPreset() in insertTemplate.ts.
+ *
+ * @deprecated Use `renderPreset()` from insertTemplate.ts. Exported so
+ * external readers can still see what each format produces.
+ */
+export const PRESET_TEMPLATES: Readonly<Record<Exclude<InsertFormat, 'custom'>, string>> = {
     'markdown':     '![{alt}]({url})',
-    'html-center':  '<div align="{align}"><img src="{url}" alt="{alt}" width="{width}"></div>',
+    'html-wrap':    '<div align="{align}"><img src="{url}" alt="{alt}" width="{width}"></div>',
     'html-figure':  '<figure><img src="{url}" alt="{alt}" width="{width}"><figcaption>{alt}</figcaption></figure>',
+    // Deprecated alias — same output as html-wrap.
+    'html-center':  '<div align="{align}"><img src="{url}" alt="{alt}" width="{width}"></div>',
 };
