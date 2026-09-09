@@ -4,7 +4,7 @@
   <p><b>A Minimalist, Efficient Multi-Platform Image Uploader for VS Code & AI-first IDEs</b></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.0.2-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.3-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
@@ -20,6 +20,7 @@
     <a href="#install">Installation</a> •
     <a href="#config">Configuration</a> •
     <a href="#hotkeys">Hotkeys</a> •
+    <a href="#troubleshooting">Troubleshooting</a> •
     <a href="#roadmap">Roadmap</a> •
     <a href="#feedback">Feedback</a>
   </p>
@@ -38,6 +39,7 @@
 -   **📉 Intelligent Image Engine**: Powered by the industrial-grade `sharp` engine.
     *   Automatically convert images to **WebP** for maximum compression while maintaining quality.
     *   Supports automatic resizing (Max Width) and quality control.
+    *   **Zero-config setup**: on first use, EzImage detects whether `sharp` is available and offers a one-click install of the native binary that matches your OS and Node.js ABI. If you prefer to skip compression, just toggle `ezimage.compress` off.
 -   **📂 Flexible Naming**: Support rich template variables like `{yyyy}/{MM}/{timestamp}-{random}.{ext}` to avoid file name conflicts.
 -   **📋 Deep Integration**: Provides editor context menus for a natural workflow.
 
@@ -55,17 +57,17 @@ EzImage not only supports standard **VS Code**, but also perfectly adapts to cur
 
 ### Method A: Install from VSIX (Recommended)
 
-1.  Download the latest `.vsix` file from [GitHub Releases](https://github.com/keepwonder/ezimage/releases).
+1.  Download the latest `.vsix` file from [GitHub Releases](https://github.com/keepwonder/ezimage/releases). Look for the file named `ezimage-X.Y.Z.vsix` under the latest release.
 2.  Press `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win) in your editor and search for `Install from VSIX`.
-3.  Or use the command line:
+3.  Or use the command line, replacing `ezimage-X.Y.Z.vsix` with the actual filename you downloaded:
 
 | IDE / Environment | Command |
 | :--- | :--- |
-| **VS Code** | `code --install-extension ezimage-1.0.2.vsix` |
-| **Antigravity** | `antigravity --install-extension ezimage-1.0.2.vsix` |
-| **Cursor** | `cursor --install-extension ezimage-1.0.2.vsix` |
-| **Windsurf** | `windsurf --install-extension ezimage-1.0.2.vsix` |
-| **Trae** | `trae --install-extension ezimage-1.0.2.vsix` |
+| **VS Code** | `code --install-extension ezimage-X.Y.Z.vsix` |
+| **Antigravity** | `antigravity --install-extension ezimage-X.Y.Z.vsix` |
+| **Cursor** | `cursor --install-extension ezimage-X.Y.Z.vsix` |
+| **Windsurf** | `windsurf --install-extension ezimage-X.Y.Z.vsix` |
+| **Trae** | `trae --install-extension ezimage-X.Y.Z.vsix` |
 
 ### Method B: From Marketplace
 
@@ -85,6 +87,29 @@ After installation, follow these steps to configure:
    - **Access Key ID / Secret Access Key**: R2 API credentials
    - **Public URL**: Your bucket's public distribution URL
 
+### All settings
+
+| Key | Default | Description |
+| :--- | :--- | :--- |
+| `ezimage.provider` | `r2` | Storage provider. Currently only `r2` is wired in; S3/OSS/COS are roadmap items. |
+| `ezimage.r2.accountId` | `""` | Cloudflare Account ID. |
+| `ezimage.r2.accessKeyId` | `""` | R2 access key ID. |
+| `ezimage.r2.secretAccessKey` | `""` | R2 secret access key. |
+| `ezimage.r2.bucketName` | `""` | R2 bucket name. |
+| `ezimage.r2.publicUrl` | `""` | Public distribution URL, e.g. `https://pub-xxxx.r2.dev`. |
+| `ezimage.pathTemplate` | `{yyyy}/{MM}/{timestamp}-{random}.{ext}` | Path template for uploaded objects. Available variables: `{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`. |
+| `ezimage.compress` | `true` | Enable WebP compression before upload. |
+| `ezimage.maxWidth` | `1920` | Maximum width in pixels; images wider than this are downscaled before encoding. Set to `0` to keep original dimensions. |
+| `ezimage.quality` | `85` | WebP quality (1–100). Higher = larger files, better fidelity. |
+| `ezimage.autoInstallSharp` | `true` | When `sharp` is missing, prompt to install the native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`. |
+| `ezimage.disableCompressionNotice` | `false` | Suppress the warning shown when the sharp compression engine is unavailable. |
+
+### R2 setup walkthrough
+
+For a step-by-step guide with screenshots covering Cloudflare R2 token creation, bucket configuration, and connecting it to EzImage, see [📘 Cloudflare R2 Setup Guide](docs/R2_GUIDE_CN.md).
+
+For path template variables in detail, see [📝 Path Variables Manual](docs/VARIABLES_CN.md).
+
 ## <span id="hotkeys"></span>⌨️ Hotkeys
 
 | Action | Mac Hotkey | Windows/Linux Hotkey |
@@ -92,10 +117,39 @@ After installation, follow these steps to configure:
 | **Upload Clipboard Image** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
 | **Upload Local File** | Search command `EzImage: Upload Image File` |
 
+## <span id="troubleshooting"></span>🔧 Troubleshooting
+
+### Images upload as the original file (WebP compression not working)
+
+This is the most common issue and almost always means the `sharp` native module failed to load inside VS Code's bundled Node.js. Open the **Output → EzImage** panel (View → Output → EzImage) and look for one of these lines:
+
+- `Compression engine unavailable: <error>` — `sharp` was found on disk but couldn't be loaded. The most likely cause is an **Electron/Node ABI mismatch**: VS Code ships with its own Node.js version, and the prebuilt binary you have may not match it. Click **"Reload Window"** after `npm install sharp` succeeds, or set `ezimage.autoInstallSharp: false` and reinstall manually with `npm rebuild sharp`.
+- `Could not find npm on PATH` — `sharp` could not be auto-installed because `npm` isn't available. Install Node.js ≥ 18.17 from [nodejs.org](https://nodejs.org) (which includes `npm`), then click **"Install sharp"** again.
+- `Auto-install exited with code N` — `npm install` itself failed. The Output panel will include a hint tailored to the failure (network/permissions/proxy). Common fixes:
+  - **Corporate proxy**: set `NPM_CONFIG_REGISTRY` in your environment to your internal mirror.
+  - **Permission denied**: the extension folder may be read-only. Reinstall the VSIX or move VS Code's extensions directory to a writable location.
+  - **Network timeout**: run `npm install sharp` manually in a terminal from inside the extension folder (`~/.vscode/extensions/kiang.ezimage-X.Y.Z/`) and reload VS Code when it finishes.
+
+If you previously chose **"不再提示"** (don't ask again), reset the flag with `ezimage.autoInstallSharp: true` in settings, then trigger any upload command.
+
+If you just want to keep working without compression, set `ezimage.compress: false` — uploads will continue to work, just without WebP conversion.
+
+### Upload succeeds but image URL returns 404
+
+The object was uploaded but `ezimage.r2.publicUrl` doesn't match the bucket's actual public distribution URL. Check the **Custom Domains** tab of your R2 bucket and copy the **Public Bucket URL** (`https://pub-xxxx.r2.dev`) into the setting. Make sure the bucket itself has public access enabled.
+
+### `Missing R2 Access Key ID` (or another "Missing R2 …" error)
+
+Run `EzImage: Configure Settings` and fill in the field mentioned in the error. All five R2 fields (`accountId`, `accessKeyId`, `secretAccessKey`, `bucketName`, `publicUrl`) are required.
+
+### Cmd/Ctrl+Alt+V doesn't paste anything
+
+The command only fires inside Markdown files. Open a `.md` document, place the cursor where you want the image link, then press the shortcut. If you're still on macOS but pasted a Finder file (not a screenshot), the helper should detect the file reference and offer it; if it doesn't, check the **Output → EzImage** channel for the line `Using image path from clipboard text` or `Unable to read clipboard file reference`.
+
 ## <span id="roadmap"></span>🗺️ Roadmap
 
 - [x] Cloudflare R2 basic support
-- [x] Multi-format auto-conversion to WebP compression
+- [x] Multi-format auto-conversion to WebP compression (with one-click `sharp` install since 1.0.3)
 - [ ] Universal AWS S3 protocol support
 - [ ] Aliyun OSS & Tencent COS support
 - [ ] Gitee/GitHub image hosting mode

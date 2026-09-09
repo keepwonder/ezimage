@@ -4,7 +4,7 @@
   <p><b>为 VS Code & AI-first IDEs 打造的极简、高效、支持多平台的图床上传插件</b></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.0.2-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.3-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
@@ -20,6 +20,7 @@
     <a href="#install">安装</a> •
     <a href="#config">配置</a> •
     <a href="#hotkeys">快捷键</a> •
+    <a href="#troubleshooting">问题排查</a> •
     <a href="#roadmap">蓝图</a> •
     <a href="#feedback">反馈</a>
   </p>
@@ -38,6 +39,7 @@
 -   **📉 智能图片引擎**: 内置 `sharp` 工业级处理引擎。
     *   自动转换为 **WebP** 格式，极致压缩体积且保持画质。
     *   支持自动尺寸调整（Max Width）和质量控制。
+    *   **零配置开箱即用**：首次上传时自动检测 `sharp` 是否就绪，缺失会引导一键安装匹配当前操作系统与 Node ABI 的原生模块；不想压缩也可以随时关闭 `ezimage.compress`。
 -   **📂 灵活的文件命名**: 支持丰富的变量模板，如 `{yyyy}/{MM}/{timestamp}-{random}.{ext}`，告别文件名冲突。
 -   **📋 深度集成**: 提供编辑器右键上下文菜单，无需记忆复杂指令。
 
@@ -55,17 +57,17 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 
 ### 方式 A：从 VSIX 安装（所有 IDE 通用）
 
-1.  从 [GitHub Releases](https://github.com/keepwonder/ezimage/releases) 下载最新的 `.vsix` 文件。
+1.  从 [GitHub Releases](https://github.com/keepwonder/ezimage/releases) 下载最新的 `.vsix` 文件（文件名形如 `ezimage-X.Y.Z.vsix`）。
 2.  在您的编辑器中按 `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win)，搜索 `Install from VSIX`。
-3.  或者使用命令行安装：
+3.  或者使用命令行安装，把 `ezimage-X.Y.Z.vsix` 替换为实际下载的文件名：
 
 | IDE / Environment | 命令行指令 |
 | :--- | :--- |
-| **VS Code** | `code --install-extension ezimage-1.0.2.vsix` |
-| **Antigravity** | `antigravity --install-extension ezimage-1.0.2.vsix` |
-| **Cursor** | `cursor --install-extension ezimage-1.0.2.vsix` |
-| **Windsurf** | `windsurf --install-extension ezimage-1.0.2.vsix` |
-| **Trae** | `trae --install-extension ezimage-1.0.2.vsix` |
+| **VS Code** | `code --install-extension ezimage-X.Y.Z.vsix` |
+| **Antigravity** | `antigravity --install-extension ezimage-X.Y.Z.vsix` |
+| **Cursor** | `cursor --install-extension ezimage-X.Y.Z.vsix` |
+| **Windsurf** | `windsurf --install-extension ezimage-X.Y.Z.vsix` |
+| **Trae** | `trae --install-extension ezimage-X.Y.Z.vsix` |
 
 ### 方式 B：从 Marketplace
 
@@ -85,6 +87,23 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
    - **Access Key ID / Secret Access Key**: R2 访问密钥对
    - **Public URL**: 您的 Bucket 公网分发地址
 
+### 全部配置项
+
+| 配置键 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `ezimage.provider` | `r2` | 存储 Provider。当前仅 `r2` 已实现；S3/OSS/COS 在 Roadmap 中。 |
+| `ezimage.r2.accountId` | `""` | Cloudflare Account ID。 |
+| `ezimage.r2.accessKeyId` | `""` | R2 访问密钥 ID。 |
+| `ezimage.r2.secretAccessKey` | `""` | R2 访问密钥 Secret。 |
+| `ezimage.r2.bucketName` | `""` | R2 存储桶名称。 |
+| `ezimage.r2.publicUrl` | `""` | 公开分发地址，例如 `https://pub-xxxx.r2.dev`。 |
+| `ezimage.pathTemplate` | `{yyyy}/{MM}/{timestamp}-{random}.{ext}` | 对象路径模板。可用变量：`{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`。 |
+| `ezimage.compress` | `true` | 是否在上传前压缩为 WebP。 |
+| `ezimage.maxWidth` | `1920` | 最大宽度（像素），超过此值会先等比缩放再压缩。设为 `0` 表示保持原图尺寸。 |
+| `ezimage.quality` | `85` | WebP 质量（1–100），数值越高画质越好、体积越大。 |
+| `ezimage.autoInstallSharp` | `true` | 当 `sharp` 缺失时，首次上传会引导一键安装。需要 Node.js ≥ 18.17 且 `npm` 在 `PATH` 上。 |
+| `ezimage.disableCompressionNotice` | `false` | 当 sharp 加载失败时是否静默（默认会提示一次）。 |
+
 > [!TIP]
 > **觉得配置太复杂？** 我们准备了 [📘 Cloudflare R2 手把手配置指南](docs/R2_GUIDE_CN.md)，包含截图和报错排查。
 >
@@ -97,10 +116,39 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 | **上传剪贴板图片** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
 | **上传本地文件** | 命令面板搜索 `EzImage: Upload Image File` |
 
+## <span id="troubleshooting"></span>🔧 问题排查
+
+### 上传后还是原图（WebP 压缩没生效）
+
+这是最常见的问题，几乎都是因为 `sharp` 原生模块在 VS Code 内嵌的 Node 里加载失败。打开 **视图 → 输出 → EzImage** 面板，查看其中是否包含以下行：
+
+- `Compression engine unavailable: <error>` — 找到了 `sharp` 但加载失败。最常见原因是 **Electron/Node ABI 不匹配**：VS Code 自带的 Node 版本与现成的预编译二进制不兼容。在 `npm install sharp` 成功后请按 `Ctrl/Cmd+Shift+P` 搜索 **"Developer: Reload Window"** 重启窗口；如果用 `ezimage.autoInstallSharp: false` 关闭了自动安装，则需手动执行 `npm rebuild sharp`。
+- `Could not find npm on PATH` — 因为 `npm` 不在环境变量里，无法自动安装 sharp。请先安装 Node.js ≥ 18.17（自带 `npm`，从 [nodejs.org](https://nodejs.org) 获取），然后再次点击 **"立即安装"**。
+- `Auto-install exited with code N` — `npm install` 执行失败。Output 面板会附带针对错误类型的提示，常见处理：
+  - **企业代理**：在环境变量里设置 `NPM_CONFIG_REGISTRY` 指向内部镜像。
+  - **权限被拒**：扩展目录不可写。请重装 VSIX 或调整 VS Code 扩展目录权限。
+  - **网络超时**：手动 cd 到扩展目录（`~/.vscode/extensions/kiang.ezimage-X.Y.Z/`）跑一次 `npm install sharp`，完成后重启 VS Code。
+
+如果之前点过 **"不再提示"**，把 `ezimage.autoInstallSharp` 改回 `true` 后再次触发上传即可重新弹窗。
+
+如果不想折腾压缩，直接把 `ezimage.compress` 设为 `false` —— 上传功能照常工作，只是不再做 WebP 转码。
+
+### 上传成功但图片链接 404
+
+R2 公开访问没有配好。打开 R2 控制台的 **Settings → Public Access**，确认存储桶已开启公共访问，然后把页面显示的 **Public Bucket URL**（形如 `https://pub-xxxx.r2.dev`）填到 `ezimage.r2.publicUrl` 即可。
+
+### 提示 `Missing R2 Access Key ID`（或其它 "Missing R2 ..." 错误）
+
+运行 `EzImage: Configure Settings`，按错误信息把对应字段填好。`accountId`、`accessKeyId`、`secretAccessKey`、`bucketName`、`publicUrl` 五项缺一不可。
+
+### `Cmd/Ctrl + Alt + V` 按了没反应
+
+命令只在 Markdown 文件里生效。请确保当前打开的是 `.md` 文件，光标停在要插入图片的位置，然后再按快捷键。如果你粘贴的是 Finder 文件（不是截图），扩展会自动识别；仍然没生效时请查看 **输出 → EzImage** 面板里的 `Using image path from clipboard text` 或 `Unable to read clipboard file reference` 行排查。
+
 ## <span id="roadmap"></span>🗺️ 发展蓝图 (Roadmap)
 
 - [x] Cloudflare R2 基础上传支持
-- [x] 多格式图片自动转 WebP 压缩
+- [x] 多格式图片自动转 WebP 压缩（自 1.0.3 起附带一键安装 sharp 引导）
 - [ ] AWS S3 通用协议支持
 - [ ] 阿里云 OSS、腾讯云 COS 接入
 - [ ] Gitee/GitHub 图床模式
