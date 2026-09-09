@@ -140,7 +140,7 @@
     "watch": "tsc -watch -p ./",
     "verify": "python3 scripts/package-vsix.py --verify ezimage-dev.vsix && rm -f ezimage-dev.vsix",
     "package": "npm run compile && python3 scripts/package-vsix.py --verify ezimage-dev.vsix",
-    "vsce:package": "npm run compile && npx --yes @vscode/vsce package --no-git-tag-version",
+    "vsce:package": "npm run compile && vsce package --no-git-tag-version",
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
