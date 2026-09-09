@@ -36,8 +36,27 @@ jobs:
         with:
           python-version: '3.11'
 
+      # On Windows runners setup-python installs `python.exe` but not `python3`.
+      # Add `python3` to PATH so scripts that hard-code `python3` (like our
+      # packaging helpers) work everywhere.
+      - name: Symlink python3 on Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $py = (Get-Command python).Source
+          $dir = Split-Path $py
+          $target = Join-Path $dir "python3.exe"
+          if (-not (Test-Path $target)) {
+            Copy-Item $py $target
+            Write-Host "Created python3.exe shim -> $target"
+          }
+          python3 --version
+
       - name: Install Dependencies
         run: npm install --no-audit --no-fund
+
+      - name: Install PyYAML for Issue template lint
+        run: pip install pyyaml
 
       - name: TypeScript Type Check
         run: npx tsc --noEmit
@@ -116,34 +135,39 @@ jobs:
           set -e
           for f in .github/ISSUE_TEMPLATE/*.yml; do
             echo "Checking $f ..."
-            # config.yml has a different schema (blank_issues_enabled + contact_links).
+            # Use environment variables (export) rather than heredoc interpolation
+            # so shell expansion inside the heredoc behaves predictably across
+            # macOS/Linux/Windows runners.
+            export TEMPLATE_FILE="$f"
             if [ "$(basename "$f")" = "config.yml" ]; then
-              python3 - <<PY
-          import sys, yaml
-          with open("$f") as fp:
+              python3 - <<'PY'
+          import os, sys, yaml
+          f = os.environ["TEMPLATE_FILE"]
+          with open(f) as fp:
               data = yaml.safe_load(fp)
           if not isinstance(data, dict):
-              print("::error::$f: top-level is not a mapping")
+              print(f"::error::{f}: top-level is not a mapping")
               sys.exit(1)
-          print("  ok ($f) [config schema]")
+          print(f"  ok ({f}) [config schema]")
           PY
             else
-              python3 - <<PY
-          import sys, yaml
-          with open("$f") as fp:
+              python3 - <<'PY'
+          import os, sys, yaml
+          f = os.environ["TEMPLATE_FILE"]
+          with open(f) as fp:
               data = yaml.safe_load(fp)
           if not isinstance(data, dict):
-              print("::error::$f: top-level is not a mapping")
+              print(f"::error::{f}: top-level is not a mapping")
               sys.exit(1)
           if "name" not in data or "description" not in data:
-              print("::error::$f: missing required name/description")
+              print(f"::error::{f}: missing required name/description")
               sys.exit(1)
           if "body" in data:
               for item in data["body"]:
                   if "type" not in item or "attributes" not in item:
-                      print("::error::$f: body item missing type or attributes")
+                      print(f"::error::{f}: body item missing type or attributes")
                       sys.exit(1)
-          print("  ok ($f)")
+          print(f"  ok ({f})")
           PY
             fi
           done
