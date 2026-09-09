@@ -59,62 +59,74 @@
             "r2"
           ],
           "default": "r2",
-          "description": "Where uploaded images go. Currently only Cloudflare R2 is wired in; AWS S3, Aliyun OSS and Tencent COS are on the roadmap."
+          "description": "Where uploaded images go. Currently only Cloudflare R2 is wired in; AWS S3, Aliyun OSS and Tencent COS are on the roadmap.",
+          "order": 10
         },
         "ezimage.r2.accountId": {
           "type": "string",
           "default": "",
-          "description": "Cloudflare Account ID. Found in the dashboard sidebar."
+          "description": "Cloudflare Account ID. Found in the dashboard sidebar.",
+          "order": 11
         },
         "ezimage.r2.accessKeyId": {
           "type": "string",
           "default": "",
-          "description": "R2 API token Access Key ID. Create at *R2 → Manage R2 API Tokens → Create API token*."
+          "description": "R2 API token Access Key ID. Create at *R2 → Manage R2 API Tokens → Create API token*.",
+          "order": 12
         },
         "ezimage.r2.secretAccessKey": {
           "type": "string",
           "default": "",
-          "description": "R2 API token Secret Access Key. Shown once at creation — copy it immediately."
+          "description": "R2 API token Secret Access Key. Shown once at creation — copy it immediately.",
+          "order": 13
         },
         "ezimage.r2.bucketName": {
           "type": "string",
           "default": "",
-          "description": "Bucket name. Create one at *R2 → Create bucket* if you don't have one yet."
+          "description": "Bucket name. Create one at *R2 → Create bucket* if you don't have one yet.",
+          "order": 14
         },
         "ezimage.r2.publicUrl": {
           "type": "string",
           "default": "",
-          "description": "Bucket's public distribution URL (e.g. `https://pub-xxxx.r2.dev`). Enable *Public Access* on the bucket."
+          "description": "Bucket's public distribution URL (e.g. `https://pub-xxxx.r2.dev`). Enable *Public Access* on the bucket.",
+          "order": 15
         },
         "ezimage.pathTemplate": {
           "type": "string",
           "default": "{yyyy}/{MM}/{timestamp}-{random}.{ext}",
-          "description": "Path template for uploaded objects. Variables: `{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`."
+          "description": "Path template for uploaded objects. Variables: `{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`.",
+          "order": 17
         },
         "ezimage.compress": {
           "type": "boolean",
           "default": true,
-          "description": "Convert images to WebP before upload. Disable if you want pixel-perfect originals or your bucket already handles optimization."
+          "description": "Convert images to WebP before upload. Disable if you want pixel-perfect originals or your bucket already handles optimization.",
+          "order": 30
         },
         "ezimage.maxWidth": {
           "type": "number",
           "default": 1920,
-          "description": "Max width in pixels. Images wider than this are downscaled before encoding. Set to `0` to keep original size."
+          "description": "Max width in pixels. Images wider than this are downscaled before encoding. Set to `0` to keep original size.",
+          "order": 31
         },
         "ezimage.quality": {
           "type": "number",
           "default": 85,
-          "description": "WebP quality (1–100). 80–85 is a good sweet spot for screenshots."
+          "description": "WebP quality (1–100). 80–85 is a good sweet spot for screenshots.",
+          "order": 32
         },
         "ezimage.autoInstallSharp": {
           "type": "boolean",
           "default": true,
-          "description": "Prompt to install the sharp native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`."
+          "description": "Prompt to install the sharp native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`.",
+          "order": 40
         },
         "ezimage.disableCompressionNotice": {
           "type": "boolean",
           "default": false,
-          "description": "Suppress the warning when sharp fails to load (e.g. Electron/Node ABI mismatch)."
+          "description": "Suppress the warning when sharp fails to load (e.g. Electron/Node ABI mismatch).",
+          "order": 41
         },
         "ezimage.insertFormat": {
           "type": "string",
@@ -131,13 +143,15 @@
             "Use your own template (see `ezimage.insertCustomTemplate`)."
           ],
           "default": "markdown",
-          "description": "How the upload appears in your Markdown document. See the README for the full variable list."
+          "description": "How the upload appears in your Markdown document. See the README for the full variable list.",
+          "order": 50
         },
         "ezimage.insertWidth": {
           "type": "string",
           "default": "100%",
           "pattern": "^(|auto|[0-9]+(%|px|em|rem|vw|vh)?)$",
-          "description": "Width attribute for HTML templates. Examples: `65%`, `600px`, `auto`. Empty = omit the attribute."
+          "description": "Width attribute for HTML templates. Examples: `65%`, `600px`, `auto`. Empty = omit the attribute.",
+          "order": 51
         },
         "ezimage.insertAlign": {
           "type": "string",
@@ -148,17 +162,20 @@
             "right"
           ],
           "default": "none",
-          "description": "Alignment for HTML templates. `none` drops the `<div>` wrapper entirely."
+          "description": "Alignment for HTML templates. `none` drops the `<div>` wrapper entirely.",
+          "order": 52
         },
         "ezimage.insertCustomTemplate": {
           "type": "string",
           "default": "",
-          "description": "Custom insert template used when `ezimage.insertFormat = 'custom'`. Variables: `{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`."
+          "description": "Custom insert template used when `ezimage.insertFormat = 'custom'`. Variables: `{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`.",
+          "order": 60
         },
         "ezimage.insertIncludeName": {
           "type": "boolean",
           "default": true,
-          "description": "Use the source filename as the alt text / figcaption. Recommended for SEO and screen readers."
+          "description": "Use the source filename as the alt text / figcaption. Recommended for SEO and screen readers.",
+          "order": 61
         },
         "ezimage.language": {
           "type": "string",
@@ -173,7 +190,8 @@
             "简体中文"
           ],
           "default": "auto",
-          "description": "Display language for EzImage prompts, errors and info messages. Settings panel labels themselves always follow VS Code (not this setting)."
+          "description": "Display language for EzImage prompts, errors and info messages. Settings panel labels themselves always follow VS Code (not this setting).",
+          "order": 90
         }
       }
     },
