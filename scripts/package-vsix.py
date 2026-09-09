@@ -101,6 +101,9 @@ def verify_vsix(vsix: Path) -> int:
             z.extractall(workdir)
 
         ext_dir = workdir / "extension"
+        print(f"  workdir: {workdir}")
+        print(f"  ext_dir: {ext_dir}")
+        print(f"  ext_dir exists: {ext_dir.exists()}")
         if not (ext_dir / "package.json").exists():
             print("  FAIL: extension/package.json missing")
             return 1
@@ -123,14 +126,33 @@ def verify_vsix(vsix: Path) -> int:
             "console.log('S3Client=' + typeof s3.S3Client + ' PutObjectCommand=' + typeof s3.PutObjectCommand);"
         )
         print("  running: node smoke test (require @aws-sdk/client-s3)")
-        result = subprocess.run(
-            ["node", "-e", smoke_code],
-            cwd=ext_dir,
-            capture_output=True,
-            text=True,
-        )
+        try:
+            # On Windows, npm-installed node is on PATH but our smoke test
+            # cwd contains a node_modules tree that we explicitly want to
+            # resolve against. shell=False (the default) avoids .cmd shim
+            # quirks on Windows.
+            result = subprocess.run(
+                ["node", "-e", smoke_code],
+                cwd=ext_dir,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                shell=False,
+            )
+        except FileNotFoundError as e:
+            print(f"  FAIL: could not run 'node': {e}")
+            return 1
+        except OSError as e:
+            print(f"  FAIL: subprocess error: {e}")
+            return 1
+        print(f"  exit code: {result.returncode}")
+        if result.stdout:
+            print(f"  stdout: {result.stdout.strip()[:300]}")
+        if result.stderr:
+            print(f"  stderr: {result.stderr.strip()[:500]}")
         if result.returncode != 0:
-            print(f"  FAIL: {result.stderr.strip()[:300]}")
+            print(f"  FAIL: smoke test exited {result.returncode}")
             return 1
         print(f"  ok: {result.stdout.strip()}")
 
@@ -151,7 +173,19 @@ def verify_vsix(vsix: Path) -> int:
         print("\n[verify] All smoke tests passed ✓")
         return 0
     finally:
-        shutil.rmtree(workdir, ignore_errors=True)
+        # On Windows, rmtree can fail on read-only files extracted from the
+        # ZIP (e.g. .gitignore-style files without the user-write bit). Use
+        # an onerror callback that clears the read-only flag and retries.
+        def _on_rm_error(func, path, exc_info):
+            try:
+                os.chmod(path, 0o777)
+            except OSError:
+                pass
+            try:
+                func(path)
+            except Exception:
+                pass
+        shutil.rmtree(workdir, ignore_errors=True, onerror=_on_rm_error)
 
 
 def main():
