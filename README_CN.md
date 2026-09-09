@@ -21,6 +21,7 @@
     <a href="#config">配置</a> •
     <a href="#hotkeys">快捷键</a> •
     <a href="#troubleshooting">问题排查</a> •
+    <a href="#i18n">多语言</a> •
     <a href="#roadmap">蓝图</a> •
     <a href="#feedback">反馈</a>
   </p>
@@ -148,6 +149,27 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 | :--- | :--- | :--- |
 | **上传剪贴板图片** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
 | **上传本地文件** | 命令面板搜索 `EzImage: Upload Image File` |
+
+## <span id="i18n"></span>🌐 多语言
+
+EzImage 自带英文和简体中文翻译。显示语言由 `ezimage.language` 控制：
+
+| 取值 | 行为 |
+| :--- | :--- |
+| `auto`（默认） | 跟随 VS Code 的界面语言。中文环境下显示简体中文，其他语言显示英文。 |
+| `en` | 强制英文。 |
+| `zh-CN` | 强制简体中文。 |
+
+修改设置后需要 **重启窗口**（`Developer: Reload Window`）生效。
+
+### 添加新翻译
+
+1. 复制 `l10n/bundle.json` 为 `l10n/<locale>.bundle.json`，翻译所有 value（不要动 key）。
+2. 在 `src/i18n.ts` 的 `SupportedLocale` 和 `BUNDLES` 里加入新 locale。
+3. 在 `src/types.ts` 和 `package.json` 的 enum 里同步加进去，让设置面板能选。
+4. CI 自动验证 key 一致性 — `npm test` 会捕捉两边的漂移。
+
+翻译文件是 JSON 格式，无需特殊工具。欢迎提 PR。
 
 ## <span id="troubleshooting"></span>🔧 问题排查
 

@@ -6,6 +6,7 @@ import { spawn } from 'child_process';
 import { EzImageSettings, IUploader, InsertFormat } from './types';
 import { UploaderFactory } from './uploaders';
 import { renderInsert } from './insertTemplate';
+import { t, configureI18n } from './i18n';
 
 // sharp is a native module with a platform-specific binary; we deliberately
 // don't bundle it. Loading is deferred until activate() so we can route any
@@ -153,7 +154,7 @@ async function compressImage(filePath: string, maxWidth: number, quality: number
 
     return tempPath;
   } catch (error) {
-    log(`Compression failed: ${error}`, 'error');
+    log(t('log.compressionFailed', String(error)), 'error');
     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
     return filePath;
   }
@@ -239,7 +240,7 @@ function installSharp(extensionPath: string): Promise<boolean> {
 
     const npm = findNpmBinary();
     if (!npm) {
-      log('Could not find npm on PATH. Please install Node.js (>= 18) which includes npm, then click "Install sharp".', 'error');
+      log(t('log.sharpInstallNpmMissing'), 'error');
       sharpInstallInFlight = false;
       resolve(false);
       return;
@@ -263,8 +264,8 @@ function installSharp(extensionPath: string): Promise<boolean> {
     cleanEnv.NO_COLOR = '1';
 
     const args = ['install', 'sharp', '--no-save', '--no-audit', '--no-fund', '--ignore-scripts=false', '--loglevel=info', '--no-progress'];
-    log(`Running: ${npm} ${args.join(' ')}`, 'info');
-    log(`Working directory: ${extensionPath}`, 'info');
+    log(t('log.sharpInstallRunning', npm, args.join(' ')), 'info');
+    log(t('log.sharpInstallCwd', extensionPath), 'info');
 
     const child = spawn(npm, args, {
       cwd: extensionPath,
@@ -302,14 +303,14 @@ function installSharp(extensionPath: string): Promise<boolean> {
     // 5 minute timeout — npm install sharp is usually under 30s, but a cold
     // download of the libvips prebuilt can occasionally stretch past 1min.
     const timeout = setTimeout(() => {
-      log('npm install timed out after 5 minutes. Aborting.', 'error');
+      log(t('log.sharpInstallTimeout'), 'error');
       child.kill('SIGTERM');
     }, 5 * 60 * 1000);
 
     child.on('error', (err) => {
       clearTimeout(timeout);
-      log(`Auto-install failed to start: ${err.message}`, 'error');
-      log('Hint: make sure `npm --version` works in your shell, then retry.', 'info');
+      log(t('log.sharpInstallProcessError', err.message), 'error');
+      log(t('log.nodeVersionPrompt'), 'info');
       sharpInstallInFlight = false;
       resolve(false);
     });
@@ -321,16 +322,16 @@ function installSharp(extensionPath: string): Promise<boolean> {
       if (stderrCarry) flushLines([sanitizeNpmLine(stderrCarry)]);
       sharpInstallInFlight = false;
       if (code === 0) {
-        log('sharp installed successfully. User must reload the window for it to take effect.', 'info');
+        log(t('log.sharpInstallSucceeded'), 'info');
         resolve(true);
       } else {
-        log(`Auto-install exited with code ${code}`, 'error');
+        log(t('log.sharpInstallFailed', String(code)), 'error');
         if (/EACCES|EPERM|EACCES/i.test(stderrBuf)) {
-          log('Hint: file permission error. Check that the extension folder is writable, or run "Reload Window" and retry.', 'info');
+          log(t('log.sharpInstallPermissionHint'), 'info');
         } else if (/ENOTFOUND|getaddrinfo|EAI_AGAIN/i.test(stderrBuf)) {
-          log('Hint: cannot reach the npm registry. Check your network or proxy settings.', 'info');
+          log(t('log.sharpInstallNetworkHint'), 'info');
         } else if (/404|Not Found/i.test(stderrBuf)) {
-          log('Hint: the npm registry rejected the package. This usually means a corporate proxy intercepted the request — try setting NPM_CONFIG_REGISTRY explicitly.', 'info');
+          log(t('log.sharpInstallProxyHint'), 'info');
         }
         resolve(false);
       }
@@ -361,8 +362,12 @@ async function uploadAndInsert(
   const settings = getSettings();
   const error = validateSettings(settings);
   if (error) {
-    const action = await vscode.window.showErrorMessage(`EzImage: ${error}`, 'Configure');
-    if (action === 'Configure') {
+    const configureLabel = t('error.configAction');
+    const action = await vscode.window.showErrorMessage(
+      t('error.configMissing', error),
+      configureLabel,
+    );
+    if (action === configureLabel) {
       vscode.commands.executeCommand('ezimage.configure');
     }
     return null;
@@ -380,43 +385,48 @@ async function uploadAndInsert(
     const onDisk = isSharpPresentOnDisk(extensionPath);
 
     if (!onDisk) {
+      const installLabel = t('sharp.notInstalled.install');
+      const skipLabel = t('sharp.notInstalled.skip');
+      const dismissLabel = t('sharp.notInstalled.dismiss');
       const choice = await vscode.window.showWarningMessage(
-        'EzImage: 智能压缩引擎 (sharp) 未安装，无法转换 WebP/压缩图片。要现在自动安装吗？',
-        '立即安装',
-        '跳过（使用原图上传）',
-        '不再提示'
+        t('sharp.notInstalled.title'),
+        installLabel,
+        skipLabel,
+        dismissLabel,
       );
-      if (choice === '立即安装') {
+      if (choice === installLabel) {
         const ok = await vscode.window.withProgress({
           location: vscode.ProgressLocation.Notification,
-          title: 'EzImage: 正在安装 sharp 原生依赖（约 30MB），请稍候…',
+          title: t('log.sharpInstallRunning', 'npm', 'install sharp'),
           cancellable: false,
         }, () => installSharp(extensionPath));
         if (ok) {
           vscode.window.showInformationMessage(
-            'EzImage: sharp 安装成功。请点击下方按钮或按 Ctrl/Cmd+Shift+P 搜索 "Developer: Reload Window" 重启窗口以加载。',
-            '重启窗口'
+            t('sharp.reloadAfterInstall.title'),
+            t('sharp.reloadAfterInstall.action'),
           ).then((action) => {
-            if (action === '重启窗口') {
+            if (action === t('sharp.reloadAfterInstall.action')) {
               vscode.commands.executeCommand('workbench.action.reloadWindow');
             }
           });
         } else {
-          vscode.window.showErrorMessage('EzImage: sharp 安装失败，请查看 Output > EzImage 获取详情，本次将以原图上传。');
+          vscode.window.showErrorMessage(t('sharp.installFailed.title'));
         }
-      } else if (choice === '不再提示') {
+      } else if (choice === dismissLabel) {
         await vscode.workspace.getConfiguration('ezimage').update('autoInstallSharp', false, vscode.ConfigurationTarget.Global);
       }
     } else if (!pluginSettings.disableCompressionNotice) {
       // sharp is on disk but require() failed — most likely an ABI mismatch.
+      const viewLogLabel = t('sharp.installFailed.action');
+      const dismissLabel = t('sharp.notInstalled.abiMismatch.dismiss');
       const choice = await vscode.window.showWarningMessage(
-        'EzImage: 已检测到 sharp，但加载失败（可能是 Electron/Node ABI 不匹配）。本次将以原图上传。',
-        '查看日志',
-        '不再提示'
+        t('sharp.notInstalled.abiMismatch.title'),
+        viewLogLabel,
+        dismissLabel,
       );
-      if (choice === '查看日志') {
+      if (choice === viewLogLabel) {
         outputChannel.show();
-      } else if (choice === '不再提示') {
+      } else if (choice === dismissLabel) {
         await vscode.workspace.getConfiguration('ezimage').update('disableCompressionNotice', true, vscode.ConfigurationTarget.Global);
       }
     }
@@ -424,7 +434,7 @@ async function uploadAndInsert(
 
   return await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
-    title: `EzImage: Uploading ${originalName}...`,
+    title: t('info.uploading', originalName),
     cancellable: false,
   }, async () => {
     let processedPath = filePath;
@@ -449,7 +459,7 @@ async function uploadAndInsert(
       }
 
       const uploader = UploaderFactory.create(settings);
-      log(`Uploading to ${settings.provider}: ${effectiveKey}`, 'info');
+      log(t('log.uploading', String(settings.provider), effectiveKey), 'info');
 
       const result = await uploader.upload({
         filePath: processedPath,
@@ -481,11 +491,11 @@ async function uploadAndInsert(
         editBuilder.insert(position, insertText);
       });
 
-      vscode.window.showInformationMessage(`Uploaded successfully!`);
+      vscode.window.showInformationMessage(t('info.uploaded'));
       return result.url;
     } catch (err: any) {
-      log(`Upload failed: ${err.message}`, 'error');
-      vscode.window.showErrorMessage(`Upload failed: ${err.message}`);
+      log(t('error.uploadFailed', err.message), 'error');
+      vscode.window.showErrorMessage(t('error.uploadFailed', err.message));
 
       if (processedPath !== filePath && fs.existsSync(processedPath)) {
         fs.unlinkSync(processedPath);
@@ -651,17 +661,26 @@ class EzImageDropProvider implements vscode.DocumentDropEditProvider {
 
 export function activate(context: vscode.ExtensionContext) {
   outputChannel = vscode.window.createOutputChannel('EzImage');
+
+  // Wire up i18n. The user's `ezimage.language` setting wins; otherwise we
+  // track VS Code's display language.
+  const config = vscode.workspace.getConfiguration('ezimage');
+  configureI18n(
+    config.get<'auto' | 'en' | 'zh-CN'>('language') ?? 'auto',
+    vscode.env.language,
+  );
+
   log('EzImage is now active', 'info');
 
   // Probe sharp eagerly so any load failure surfaces in Output from the start,
   // rather than waiting for the user's first upload.
   const probe = loadSharp();
   if (probe) {
-    log(`Compression engine ready (sharp ${probe.versions?.sharp || 'unknown'}).`, 'info');
+    log(t('log.compressionReady', probe.versions?.sharp || 'unknown'), 'info');
   } else {
-    log(`Compression engine unavailable: ${sharpLoadError}`, 'error');
-    log('EzImage will fall back to uploading the original image until sharp is installed.', 'error');
-    log('To fix: trigger an upload — you will be offered an auto-install, or run `npm install sharp` in the extension folder.', 'info');
+    log(t('log.compressionUnavailable', String(sharpLoadError || 'unknown')), 'error');
+    log(t('log.compressionWillFallback'), 'error');
+    log(t('log.compressionFallbackHint'), 'info');
   }
 
   const dropProvider = vscode.languages.registerDocumentDropEditProvider({ language: 'markdown' }, new EzImageDropProvider());
@@ -676,13 +695,13 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
     if (clipboardFile.containsFileReference) {
-      vscode.window.showErrorMessage('EzImage found a copied file but could not read it as a supported image. See Output > EzImage for clipboard details.');
+      vscode.window.showErrorMessage(t('error.invalidFile'));
       return;
     }
 
     const tempPath = await saveClipboardImage();
     if (!tempPath) {
-      vscode.window.showErrorMessage('No image found in clipboard');
+      vscode.window.showErrorMessage(t('error.noImage'));
       return;
     }
 
@@ -700,13 +719,13 @@ export function activate(context: vscode.ExtensionContext) {
     if (!editor) return;
 
     const formatChoices: { label: string; value: InsertFormat; description: string }[] = [
-      { label: 'Markdown',          value: 'markdown',     description: '![alt](url)' },
-      { label: 'HTML Centered',     value: 'html-center',  description: '<div align="center"><img …></div>' },
-      { label: 'HTML <figure>',     value: 'html-figure',  description: '<figure><img><figcaption></figure>' },
+      { label: t('prompt.chooseFormat.markdown.label'),     value: 'markdown',     description: t('prompt.chooseFormat.markdown.description') },
+      { label: t('prompt.chooseFormat.htmlCenter.label'),  value: 'html-center',  description: t('prompt.chooseFormat.htmlCenter.description') },
+      { label: t('prompt.chooseFormat.htmlFigure.label'),  value: 'html-figure',  description: t('prompt.chooseFormat.htmlFigure.description') },
     ];
     const picked = await vscode.window.showQuickPick(formatChoices, {
-      placeHolder: 'Insert this upload as…',
-      title: 'EzImage: Choose insert format',
+      placeHolder: t('prompt.chooseFormat.placeholder'),
+      title: t('prompt.chooseFormat.title'),
     });
     if (!picked) return;
 
@@ -716,13 +735,13 @@ export function activate(context: vscode.ExtensionContext) {
       return;
     }
     if (clipboardFile.containsFileReference) {
-      vscode.window.showErrorMessage('EzImage found a copied file but could not read it as a supported image. See Output > EzImage for clipboard details.');
+      vscode.window.showErrorMessage(t('error.invalidFile'));
       return;
     }
 
     const tempPath = await saveClipboardImage();
     if (!tempPath) {
-      vscode.window.showErrorMessage('No image found in clipboard');
+      vscode.window.showErrorMessage(t('error.noImage'));
       return;
     }
 

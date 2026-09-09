@@ -53,6 +53,7 @@ node_modules/.package-lock.json
 
 # Keep the extension folder + key project files
 !out/**
+!l10n/**
 !package.json
 !README.md
 !README_CN.md

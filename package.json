@@ -15,6 +15,7 @@
     "node": ">=18.17.0"
   },
   "extensionDependencies": [],
+  "l10n": "./l10n",
   "categories": [
     "Other"
   ],
@@ -30,23 +31,23 @@
     "commands": [
       {
         "command": "ezimage.uploadClipboard",
-        "title": "Upload Clipboard Image",
+        "title": "%cmd.uploadClipboard.title%",
         "category": "EzImage"
       },
       {
         "command": "ezimage.uploadClipboardAs",
-        "title": "Upload Clipboard Image As…",
+        "title": "%cmd.uploadClipboardAs.title%",
         "category": "EzImage",
-        "description": "Pick the insert format (Markdown / HTML center / HTML figure) for this upload only."
+        "description": "%cmd.uploadClipboardAs.description%"
       },
       {
         "command": "ezimage.uploadFile",
-        "title": "Upload Image File",
+        "title": "%cmd.uploadFile.title%",
         "category": "EzImage"
       },
       {
         "command": "ezimage.configure",
-        "title": "Configure Settings",
+        "title": "%cmd.configure.title%",
         "category": "EzImage"
       }
     ],
@@ -159,6 +160,21 @@
           "type": "boolean",
           "default": true,
           "description": "Use the source filename as the alt text / figcaption (ignored if insertCustomAlt is set)."
+        },
+        "ezimage.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "en",
+            "zh-CN"
+          ],
+          "enumDescriptions": [
+            "Follow VS Code's display language",
+            "English",
+            "简体中文"
+          ],
+          "default": "auto",
+          "description": "Display language for EzImage prompts, errors, and info messages. 'auto' follows VS Code's display language."
         }
       }
     },

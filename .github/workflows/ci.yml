@@ -195,3 +195,43 @@ jobs:
           assert 'tagPrefix' in data, 'missing tagPrefix'
           print('  ok (.versionrc.json)')
           "
+
+      # 6) Validate l10n bundles parse and have matching key sets across
+      #    locales. A typo in either file would otherwise only surface at
+      #    runtime when a user happens to hit the missing key.
+      - name: Validate l10n bundles
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python3 - <<'PY'
+          import json, sys, pathlib
+          bundles = {}
+          for f in pathlib.Path('l10n').glob('*.json'):
+              bundles[f.stem] = json.loads(f.read_text(encoding='utf-8'))
+
+          # Strip comment keys (anything starting with '%') before comparing.
+          def real_keys(d):
+              return {k for k in d.keys() if not k.startswith('%')}
+
+          keys_by_locale = {loc: real_keys(b) for loc, b in bundles.items()}
+          en_keys = keys_by_locale.get('bundle', set())
+          if not en_keys:
+              print('::error::l10n/bundle.json missing or empty')
+              sys.exit(1)
+
+          failed = False
+          for loc, keys in keys_by_locale.items():
+              if loc == 'bundle':
+                  continue
+              missing = en_keys - keys
+              extra   = keys - en_keys
+              if missing:
+                  print(f'::error::l10n/{loc}.bundle.json missing keys: {sorted(missing)[:10]}')
+                  failed = True
+              if extra:
+                  print(f'::error::l10n/{loc}.bundle.json has extra keys: {sorted(extra)[:10]}')
+                  failed = True
+
+          if failed:
+              sys.exit(1)
+          print(f'  ok ({len(en_keys)} keys, all {len(bundles)} bundles in sync)')
+          PY

@@ -21,6 +21,7 @@
     <a href="#config">Configuration</a> •
     <a href="#hotkeys">Hotkeys</a> •
     <a href="#troubleshooting">Troubleshooting</a> •
+    <a href="#i18n">Languages</a> •
     <a href="#roadmap">Roadmap</a> •
     <a href="#feedback">Feedback</a>
   </p>
@@ -149,6 +150,27 @@ For path template variables in detail, see [📝 Path Variables Manual](docs/VAR
 | :--- | :--- | :--- |
 | **Upload Clipboard Image** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
 | **Upload Local File** | Search command `EzImage: Upload Image File` |
+
+## <span id="i18n"></span>🌐 Languages
+
+EzImage ships with English and Simplified Chinese translations. The display language is controlled by `ezimage.language`:
+
+| Value | Behaviour |
+| :--- | :--- |
+| `auto` (default) | Follows VS Code's display language. Chinese-locale users see 简体中文; everyone else sees English. |
+| `en` | Force English regardless of VS Code locale. |
+| `zh-CN` | Force Simplified Chinese. |
+
+When you change the setting, reload the window (`Developer: Reload Window`) for the change to take effect.
+
+### Adding a new translation
+
+1. Copy `l10n/bundle.json` to `l10n/<locale>.bundle.json` and translate the values (not the keys).
+2. In `src/i18n.ts`, add the new locale code to `SupportedLocale` and `BUNDLES`.
+3. Update `src/types.ts` / `package.json` enum so the language setting surfaces in the UI.
+4. CI validates key parity automatically — `npm test` catches drift between bundles.
+
+Translations are JSON, so no special tooling is needed. PRs welcome.
 
 ## <span id="troubleshooting"></span>🔧 Troubleshooting
 
