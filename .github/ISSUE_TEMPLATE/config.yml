@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 WeChat community (Chinese)
+    url: https://github.com/keepwonder/ezimage#-contact--support
+    about: For Chinese-speaking users who'd rather ask in the WeChat group before opening an issue.
+  - name: 📖 R2 setup walkthrough
+    url: docs/R2_GUIDE_CN.md
+    about: Step-by-step Cloudflare R2 setup with screenshots. Covers 90% of "Missing R2 ..." errors.
+  - name: 🔧 Troubleshooting
+    url: https://github.com/keepwonder/ezimage#-troubleshooting
+    about: Always check here first — most reported issues have a documented fix.

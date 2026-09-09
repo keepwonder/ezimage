@@ -1,13 +1,13 @@
 {
   "types": [
-    { "type": "feat", "section": "✨ Features" },
-    { "type": "fix", "section": "🐛 Bug Fixes" },
-    { "type": "perf", "section": "⚡ Performance" },
-    { "type": "refactor", "section": "♻️ Refactors" },
-    { "type": "docs", "section": "📚 Documentation" },
-    { "type": "build", "section": "📦 Build System" },
-    { "type": "ci", "section": "🔧 Continuous Integration" },
-    { "type": "test", "section": "✅ Tests" },
+    { "type": "feat", "section": "✨ Features / 新功能" },
+    { "type": "fix", "section": "🐛 Bug Fixes / 问题修复" },
+    { "type": "perf", "section": "⚡ Performance / 性能优化" },
+    { "type": "refactor", "section": "♻️ Refactors / 重构" },
+    { "type": "docs", "section": "📚 Documentation / 文档" },
+    { "type": "build", "section": "📦 Build System / 构建" },
+    { "type": "ci", "section": "🔧 Continuous Integration / CI" },
+    { "type": "test", "section": "✅ Tests / 测试" },
     { "type": "chore", "hidden": true },
     { "type": "style", "hidden": true }
   ],
@@ -19,5 +19,6 @@
     "changelog": false
   },
   "infile": "CHANGELOG.md",
-  "header": "# Changelog\n\nAll notable changes to EzImage are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."
+  "header": "# Changelog\n\nAll notable changes to EzImage are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n\n本文件记录 EzImage 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-cn/1.1.0/) ，本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。"
 }
+

@@ -106,3 +106,57 @@ jobs:
             echo "::error::VSIX is ${VSIX_MB} MB, expected < 5 MB. .vscodeignore likely regressed."
             exit 1
           fi
+
+      # 4) Validate GitHub Issue templates parse as YAML with the schema
+      #    GitHub expects (top-level name/description/body, body items have
+      #    type + attributes). Catches regressions before they ship.
+      - name: Validate Issue templates
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          set -e
+          for f in .github/ISSUE_TEMPLATE/*.yml; do
+            echo "Checking $f ..."
+            # config.yml has a different schema (blank_issues_enabled + contact_links).
+            if [ "$(basename "$f")" = "config.yml" ]; then
+              python3 - <<PY
+          import sys, yaml
+          with open("$f") as fp:
+              data = yaml.safe_load(fp)
+          if not isinstance(data, dict):
+              print("::error::$f: top-level is not a mapping")
+              sys.exit(1)
+          print("  ok ($f) [config schema]")
+          PY
+            else
+              python3 - <<PY
+          import sys, yaml
+          with open("$f") as fp:
+              data = yaml.safe_load(fp)
+          if not isinstance(data, dict):
+              print("::error::$f: top-level is not a mapping")
+              sys.exit(1)
+          if "name" not in data or "description" not in data:
+              print("::error::$f: missing required name/description")
+              sys.exit(1)
+          if "body" in data:
+              for item in data["body"]:
+                  if "type" not in item or "attributes" not in item:
+                      print("::error::$f: body item missing type or attributes")
+                      sys.exit(1)
+          print("  ok ($f)")
+          PY
+            fi
+          done
+
+      # 5) Validate .versionrc.json parses (catches release automation breakage)
+      - name: Validate .versionrc.json
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          python3 -c "
+          import json
+          with open('.versionrc.json') as f:
+              data = json.load(f)
+          assert 'types' in data, 'missing types'
+          assert 'tagPrefix' in data, 'missing tagPrefix'
+          print('  ok (.versionrc.json)')
+          "

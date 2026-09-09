@@ -1,0 +1,62 @@
+name: ✨ Feature Request
+description: Suggest a new feature for EzImage.
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        We love feature ideas! Before opening a request, please skim the [Roadmap](https://github.com/keepwonder/ezimage#-roadmap) to make sure we're not already planning it.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - New storage provider (S3, OSS, COS, ...)
+        - Image processing (filters, watermarks, EXIF stripping)
+        - UI / UX (history panel, status bar, command palette)
+        - Workflow (rename template, batch upload, image processing pipeline)
+        - Cross-platform compatibility
+        - Documentation / i18n
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: 'Frame the request as a user problem, not a solution. "I am frustrated when…" is more compelling than "add feature X".'
+      placeholder: |
+        When I take a screenshot in a non-English app, the filename has non-ASCII characters that break my
+        CDN cache. I'd like the option to sanitize uploaded paths to URL-safe characters.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: How would you like it to work?
+      description: Sketch the desired behaviour. Mock-ups, screenshots of competitors, or pseudo-code are all welcome.
+      placeholder: |
+        Add a setting `ezimage.pathTemplate.asciiOnly` that maps non-ASCII characters to their closest
+        ASCII look-alike (e.g. `é → e`, `中 → zhong`) before applying the template.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Workarounds you've considered
+      description: Tell us about any existing workarounds so we understand the gap.
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Anything else?
+      description: Links, screenshots, related issues, examples from other extensions, etc.
+    validations:
+      required: false

@@ -1,0 +1,125 @@
+name: 🐛 Bug Report
+description: 'Report a bug in EzImage. For compression/WebP issues, please first read the [Troubleshooting section](https://github.com/keepwonder/ezimage#-troubleshooting) in the README — most reported cases have a documented fix.'
+labels: ["bug"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. To help us reproduce and fix it quickly, please fill out the template below.
+
+        > 💡 **Before you submit:** if your issue is "compression doesn't work / image uploads as original", please check **Output → EzImage** in VS Code first. Almost every compression problem is a sharp loading failure with a specific error message; that message will pinpoint the fix.
+
+  - type: checkboxes
+    id: troubleshooting
+    attributes:
+      label: Troubleshooting checklist
+      description: 'Please confirm each item. Skipping these steps is the #1 reason we have to ask follow-up questions.'
+      options:
+        - label: I opened **View → Output → EzImage** and copied any error message below.
+          required: true
+        - label: I confirmed my Node.js version is ≥ 18.17 by running `node --version`.
+          required: true
+        - label: 'I tried setting `ezimage.autoInstallSharp` to true and re-running an upload.'
+          required: false
+        - label: 'I tried setting `ezimage.compress` to false to confirm uploads themselves work.'
+          required: false
+        - label: I searched existing [issues](https://github.com/keepwonder/ezimage/issues) and did not find a duplicate.
+          required: true
+
+  - type: input
+    id: vscode_version
+    attributes:
+      label: VS Code (or IDE) version
+      description: 'Found in Help → About. Example: 1.96.2'
+      placeholder: "1.96.2"
+    validations:
+      required: true
+
+  - type: input
+    id: ezimage_version
+    attributes:
+      label: EzImage version
+      description: 'Find in the Extensions panel under EzImage. Example: 1.0.3'
+      placeholder: "1.0.3"
+    validations:
+      required: true
+
+  - type: input
+    id: node_version
+    attributes:
+      label: Node.js version
+      description: 'Output of `node --version`. Tip: run it from VS Code''s integrated terminal so we know the path it sees, not the system Node.'
+      placeholder: "v20.18.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 11
+        - Windows 10
+        - Ubuntu 22.04 / 24.04
+        - Other Linux
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Storage provider
+      options:
+        - Cloudflare R2
+    validations:
+      required: true
+
+  - type: textarea
+    id: symptoms
+    attributes:
+      label: What happened?
+      description: 'Describe what you expected vs. what actually occurred. Be specific — "does not work" is hard to act on, but "WebP file lands at .png extension" is actionable.'
+      placeholder: |
+        Expected: uploading a 4 MB PNG should produce a ~600 KB WebP at the .webp key.
+        Actual:   the same 4 MB PNG lands in R2 unchanged, still named .png.
+    validations:
+      required: true
+
+  - type: textarea
+    id: output_panel
+    attributes:
+      label: EzImage Output panel contents
+      description: 'Copy the relevant lines from View → Output → EzImage. Wrap them in triple backticks. If the panel is empty, run an upload first then copy.'
+      placeholder: |
+        ```
+        [14:23:01] [INFO] EzImage is now active
+        [14:23:05] [ERROR] Compression engine unavailable: Could not locate the bindings file ...
+        [14:23:08] [INFO] Uploading to r2: 2026/09/foo.png
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: 'Numbered list of exact steps so we can follow along.'
+      placeholder: |
+        1. Open VS Code 1.96.2 on macOS 14.5
+        2. Open `~/notes/post.md`
+        3. Take a screenshot with Cmd+Shift+4
+        4. Press Cmd+Alt+V
+        5. Observe the inserted markdown references a .png URL but the file is 4 MB
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: 'Screenshots, links, related issues, workarounds you have tried — anything that helps.'
+    validations:
+      required: false

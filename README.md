@@ -30,6 +30,8 @@
 
 **EzImage** is a image uploader tool deeply customized for VS Code. It is designed to solve the pain points of "hard to save, annoying to paste" in Markdown creation, helping you upload images and insert Markdown links in the most natural way (clipboard paste, drag and drop, context menu).
 
+> ⚠️ **Compression not working or upload looks broken?** Check the [🔧 Troubleshooting](#troubleshooting) section — most reported issues (sharp failing to load, public URL 404, missing R2 fields) have a known fix there.
+
 ## <span id="features"></span>✨ Features
 
 -   **🚀 Multi-Platform Support**: Pluggable architecture, starting with Cloudflare R2, with AWS S3, Aliyun OSS, and Tencent COS coming soon.
