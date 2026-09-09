@@ -1,0 +1,43 @@
+{
+  "cmd.uploadClipboard.title": "Upload Clipboard Image",
+  "cmd.uploadClipboardAs.title": "Upload Clipboard Image As…",
+  "cmd.uploadClipboardAs.description": "Pick the insert format (Markdown / HTML center / HTML figure) for this upload only.",
+  "cmd.uploadFile.title": "Upload Image File",
+  "cmd.configure.title": "Configure Settings",
+
+  "config.provider.description": "Storage provider. Currently only `r2` is wired in; S3/OSS/COS are roadmap items.",
+  "config.r2.accountId.description": "[R2] Cloudflare Account ID.",
+  "config.r2.accessKeyId.description": "[R2] R2 access key ID.",
+  "config.r2.secretAccessKey.description": "[R2] R2 secret access key.",
+  "config.r2.bucketName.description": "[R2] R2 bucket name.",
+  "config.r2.publicUrl.description": "[R2] Public distribution URL, e.g. `https://pub-xxxx.r2.dev`.",
+
+  "config.pathTemplate.description": "Path template for uploaded objects. Available variables: {yyyy} {MM} {dd} {hh} {mm} {ss} {timestamp} {random} {name} {ext}.",
+
+  "config.compress.description": "Enable WebP compression before upload.",
+  "config.maxWidth.description": "Maximum width in pixels; images wider than this are downscaled before encoding. Set to `0` to keep original dimensions.",
+  "config.quality.description": "WebP quality (1-100). Higher = larger files, better fidelity.",
+
+  "config.autoInstallSharp.description": "When `sharp` is missing, prompt to install the native binary on first use. Requires Node.js ≥ 18.17 and `npm` on PATH.",
+  "config.disableCompressionNotice.description": "Suppress the warning shown when the sharp compression engine is unavailable.",
+
+  "config.insertFormat.description": "How to render the image snippet that gets inserted into the editor. `markdown` / `html-center` / `html-figure` / `custom`. See README §Insert format templates.",
+  "config.insertFormat.enum.markdown": "Plain Markdown image: ![alt](url)",
+  "config.insertFormat.enum.htmlCenter": "Centered HTML <img> wrapped in <div align=\"center\">",
+  "config.insertFormat.enum.htmlFigure": "Semantic HTML5 <figure> with <figcaption>",
+  "config.insertFormat.enum.custom": "Use your own template (ezimage.insertCustomTemplate)",
+
+  "config.insertWidth.description": "Width attribute used in {width} for HTML templates. e.g. `65%`, `600px`, `auto`. Empty = omit the width attribute.",
+  "config.insertAlign.description": "Alignment for HTML templates. `none` skips the wrapper <div>.",
+  "config.insertAlign.enum.none": "No wrapper",
+  "config.insertAlign.enum.left": "Left aligned <div>",
+  "config.insertAlign.enum.center": "Centered <div>",
+  "config.insertAlign.enum.right": "Right aligned <div>",
+  "config.insertCustomTemplate.description": "Custom insert template used when ezimage.insertFormat = 'custom'. Variables: {url} {filename} {name} {ext} {width} {align} {alt}.",
+  "config.insertIncludeName.description": "Use the source filename as the alt text / figcaption. Ignored if insertCustomAlt is set.",
+
+  "config.language.description": "Display language for EzImage prompts, errors, and info messages. `auto` follows VS Code's display language.",
+  "config.language.enum.auto": "Follow VS Code's display language",
+  "config.language.enum.en": "English",
+  "config.language.enum.zh-CN": "简体中文"
+}

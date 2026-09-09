@@ -204,32 +204,45 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, sys, pathlib
-          bundles = {}
-          for f in pathlib.Path('l10n').glob('*.json'):
-              bundles[f.stem] = json.loads(f.read_text(encoding='utf-8'))
 
-          # Strip comment keys (anything starting with '%') before comparing.
-          def real_keys(d):
-              return {k for k in d.keys() if not k.startswith('%')}
+          def check_dir(dir_path, fallback_name):
+              bundles = {}
+              for f in pathlib.Path(dir_path).glob('*.json'):
+                  bundles[f.stem] = json.loads(f.read_text(encoding='utf-8'))
 
-          keys_by_locale = {loc: real_keys(b) for loc, b in bundles.items()}
-          en_keys = keys_by_locale.get('bundle', set())
-          if not en_keys:
-              print('::error::l10n/bundle.json missing or empty')
-              sys.exit(1)
+              def real_keys(d):
+                  return {k for k in d.keys() if not k.startswith('%')}
+
+              keys_by_locale = {loc: real_keys(b) for loc, b in bundles.items()}
+              fallback_keys = keys_by_locale.get(fallback_name, set())
+              if not fallback_keys:
+                  print(f'::error::{dir_path}/{fallback_name}.json missing or empty')
+                  sys.exit(1)
+
+              failed = False
+              for loc, keys in keys_by_locale.items():
+                  if loc == fallback_name:
+                      continue
+                  missing = fallback_keys - keys
+                  extra   = keys - fallback_keys
+                  if missing:
+                      print(f'::error::{dir_path}/{loc}.json missing keys: {sorted(missing)[:10]}')
+                      failed = True
+                  if extra:
+                      print(f'::error::{dir_path}/{loc}.json has extra keys: {sorted(extra)[:10]}')
+                      failed = True
+              return failed
 
           failed = False
-          for loc, keys in keys_by_locale.items():
-              if loc == 'bundle':
-                  continue
-              missing = en_keys - keys
-              extra   = keys - en_keys
-              if missing:
-                  print(f'::error::l10n/{loc}.bundle.json missing keys: {sorted(missing)[:10]}')
-                  failed = True
-              if extra:
-                  print(f'::error::l10n/{loc}.bundle.json has extra keys: {sorted(extra)[:10]}')
-                  failed = True
+          # Runtime translations (used by our t() function)
+          failed |= check_dir('l10n', 'bundle')
+          # VS Code UI translations (used by VS Code itself for settings panel)
+          failed |= check_dir('.', 'package.nls')
+
+          if failed:
+              sys.exit(1)
+          print('  ok (l10n/ and package.nls.* all in sync)')
+          PY
 
           if failed:
               sys.exit(1)

@@ -60,62 +60,62 @@
             "r2"
           ],
           "default": "r2",
-          "description": "Select your cloud storage provider"
+          "description": "%config.provider.description%"
         },
         "ezimage.r2.accountId": {
           "type": "string",
           "default": "",
-          "description": "[R2] Cloudflare Account ID"
+          "description": "%config.r2.accountId.description%"
         },
         "ezimage.r2.accessKeyId": {
           "type": "string",
           "default": "",
-          "description": "[R2] Access Key ID"
+          "description": "%config.r2.accessKeyId.description%"
         },
         "ezimage.r2.secretAccessKey": {
           "type": "string",
           "default": "",
-          "description": "[R2] Secret Access Key"
+          "description": "%config.r2.secretAccessKey.description%"
         },
         "ezimage.r2.bucketName": {
           "type": "string",
           "default": "",
-          "description": "[R2] Bucket Name"
+          "description": "%config.r2.bucketName.description%"
         },
         "ezimage.r2.publicUrl": {
           "type": "string",
           "default": "",
-          "description": "[R2] Public URL (e.g., https://pub-xxx.r2.dev)"
+          "description": "%config.r2.publicUrl.description%"
         },
         "ezimage.pathTemplate": {
           "type": "string",
           "default": "{yyyy}/{MM}/{timestamp}-{random}.{ext}",
-          "description": "Path template for uploaded images"
+          "description": "%config.pathTemplate.description%"
         },
         "ezimage.compress": {
           "type": "boolean",
           "default": true,
-          "description": "Enable image compression"
+          "description": "%config.compress.description%"
         },
         "ezimage.maxWidth": {
           "type": "number",
           "default": 1920,
-          "description": "Maximum width for compressed images"
+          "description": "%config.maxWidth.description%"
         },
         "ezimage.quality": {
           "type": "number",
           "default": 85,
-          "description": "JPEG quality for compression (1-100)"
+          "description": "%config.quality.description%"
         },
         "ezimage.autoInstallSharp": {
           "type": "boolean",
           "default": true,
-          "description": "Auto-install the sharp native dependency on first use when missing (requires Node.js + npm on PATH)"
+          "description": "%config.autoInstallSharp.description%"
         },
         "ezimage.disableCompressionNotice": {
           "type": "boolean",
           "default": false,
-          "description": "Suppress the warning shown when the sharp compression engine is unavailable"
+          "description": "%config.disableCompressionNotice.description%"
         },
         "ezimage.insertFormat": {
           "type": "string",
@@ -126,19 +126,19 @@
             "custom"
           ],
           "enumDescriptions": [
-            "Plain Markdown image: ![alt](url)",
-            "Centered HTML <img> wrapped in <div align=\"center\">",
-            "Semantic HTML5 <figure> with <figcaption>",
-            "Use your own template (ezimage.insertCustomTemplate)"
+            "%config.insertFormat.enum.markdown%",
+            "%config.insertFormat.enum.htmlCenter%",
+            "%config.insertFormat.enum.htmlFigure%",
+            "%config.insertFormat.enum.custom%"
           ],
           "default": "markdown",
-          "description": "How to render the image snippet that gets inserted into the editor"
+          "description": "%config.insertFormat.description%"
         },
         "ezimage.insertWidth": {
           "type": "string",
           "default": "100%",
           "pattern": "^(|auto|[0-9]+(%|px|em|rem|vw|vh)?)$",
-          "description": "Width attribute used in {width} for HTML templates (e.g. 65%, 600px, auto). Empty = omit the width attribute."
+          "description": "%config.insertWidth.description%"
         },
         "ezimage.insertAlign": {
           "type": "string",
@@ -148,18 +148,24 @@
             "center",
             "right"
           ],
+          "enumDescriptions": [
+            "%config.insertAlign.enum.none%",
+            "%config.insertAlign.enum.left%",
+            "%config.insertAlign.enum.center%",
+            "%config.insertAlign.enum.right%"
+          ],
           "default": "none",
-          "description": "Alignment for HTML templates. 'none' skips the wrapper <div>."
+          "description": "%config.insertAlign.description%"
         },
         "ezimage.insertCustomTemplate": {
           "type": "string",
           "default": "",
-          "description": "Custom insert template used when ezimage.insertFormat = 'custom'. Variables: {url} {filename} {name} {ext} {width} {align} {alt}."
+          "description": "%config.insertCustomTemplate.description%"
         },
         "ezimage.insertIncludeName": {
           "type": "boolean",
           "default": true,
-          "description": "Use the source filename as the alt text / figcaption (ignored if insertCustomAlt is set)."
+          "description": "%config.insertIncludeName.description%"
         },
         "ezimage.language": {
           "type": "string",
@@ -169,12 +175,12 @@
             "zh-CN"
           ],
           "enumDescriptions": [
-            "Follow VS Code's display language",
-            "English",
-            "简体中文"
+            "%config.language.enum.auto%",
+            "%config.language.enum.en%",
+            "%config.language.enum.zh-CN%"
           ],
           "default": "auto",
-          "description": "Display language for EzImage prompts, errors, and info messages. 'auto' follows VS Code's display language."
+          "description": "%config.language.description%"
         }
       }
     },

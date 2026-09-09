@@ -1,0 +1,43 @@
+{
+  "cmd.uploadClipboard.title": "上传剪贴板图片",
+  "cmd.uploadClipboardAs.title": "上传剪贴板图片为…",
+  "cmd.uploadClipboardAs.description": "为本次上传选择插入格式（Markdown / HTML 居中 / HTML figure）。",
+  "cmd.uploadFile.title": "上传图片文件",
+  "cmd.configure.title": "配置 EzImage",
+
+  "config.provider.description": "存储 Provider。当前仅 `r2` 已实现；S3/OSS/COS 在 Roadmap 中。",
+  "config.r2.accountId.description": "[R2] Cloudflare Account ID。",
+  "config.r2.accessKeyId.description": "[R2] R2 访问密钥 ID。",
+  "config.r2.secretAccessKey.description": "[R2] R2 访问密钥 Secret。",
+  "config.r2.bucketName.description": "[R2] R2 存储桶名称。",
+  "config.r2.publicUrl.description": "[R2] 公开分发地址，例如 `https://pub-xxxx.r2.dev`。",
+
+  "config.pathTemplate.description": "对象路径模板。可用变量：{yyyy} {MM} {dd} {hh} {mm} {ss} {timestamp} {random} {name} {ext}。",
+
+  "config.compress.description": "是否在上传前压缩为 WebP。",
+  "config.maxWidth.description": "最大宽度（像素），超过此值会先等比缩放再压缩。设为 `0` 表示保持原图尺寸。",
+  "config.quality.description": "WebP 质量（1–100），数值越高画质越好、体积越大。",
+
+  "config.autoInstallSharp.description": "当 `sharp` 缺失时，首次上传会引导一键安装。需要 Node.js ≥ 18.17 且 `npm` 在 `PATH` 上。",
+  "config.disableCompressionNotice.description": "当 sharp 加载失败时是否静默（默认会提示一次）。",
+
+  "config.insertFormat.description": "插入到编辑器的片段格式。`markdown` / `html-center` / `html-figure` / `custom`。详见 README §插入格式模板。",
+  "config.insertFormat.enum.markdown": "纯 Markdown 语法：![alt](url)",
+  "config.insertFormat.enum.htmlCenter": "居中 HTML <img>，包 <div align=\"center\">",
+  "config.insertFormat.enum.htmlFigure": "语义化 HTML5 <figure>，带 <figcaption>",
+  "config.insertFormat.enum.custom": "使用自定义模板（ezimage.insertCustomTemplate）",
+
+  "config.insertWidth.description": "HTML 模板里 `{width}` 渲染的值。例如 `65%`、`600px`、`auto`。空字符串表示不输出 width 属性。",
+  "config.insertAlign.description": "HTML 模板的对齐方式。`none` 不包 `<div>` 包裹层。",
+  "config.insertAlign.enum.none": "不包包裹层",
+  "config.insertAlign.enum.left": "左对齐 <div>",
+  "config.insertAlign.enum.center": "居中 <div>",
+  "config.insertAlign.enum.right": "右对齐 <div>",
+  "config.insertCustomTemplate.description": "`insertFormat = custom` 时使用的模板字符串。可用变量：`{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`。",
+  "config.insertIncludeName.description": "是否用源文件名作为 alt 文本 / figcaption。如果设置了 `insertCustomAlt` 则忽略此项。",
+
+  "config.language.description": "EzImage 弹窗、错误、提示信息的显示语言。`auto` 跟随 VS Code 的界面语言。",
+  "config.language.enum.auto": "跟随 VS Code 的界面语言",
+  "config.language.enum.en": "English",
+  "config.language.enum.zh-CN": "简体中文"
+}
