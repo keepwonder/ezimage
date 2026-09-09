@@ -93,3 +93,36 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Publish to VS Code Marketplace.
+      #
+      # Requires a `VSCE_PAT` secret in the repo settings. To create one:
+      #   1. Log in to https://dev.azure.com with the publisher account
+      #   2. User Settings -> Personal Access Tokens -> New Token
+      #   3. Scopes: Marketplace (Manage)  -- this gives "publish" capability
+      #   4. Add it as a repo secret at:
+      #      Settings -> Secrets and variables -> Actions -> New repository secret
+      #
+      # If the secret is missing, this step is skipped and a warning is printed
+      # so the GitHub Release still goes out. You can re-run publish later:
+      #   npx vsce publish --packagePath ezimage-${{ steps.meta.outputs.version }}.vsix
+      - name: Publish to VS Code Marketplace
+        if: ${{ secrets.VSCE_PAT != '' }}
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          set -e
+          echo "Publishing v${{ steps.meta.outputs.version }} to VS Code Marketplace..."
+          # vsce picks up VSCE_PAT from env, no need for --pat flag
+          npx --yes @vscode/vsce publish \
+            --packagePath "ezimage-${{ steps.meta.outputs.version }}.vsix" \
+            --no-git-tag-version
+          echo "Published successfully."
+
+      - name: Marketplace secret missing
+        if: ${{ secrets.VSCE_PAT == '' }}
+        run: |
+          echo "::warning::VSCE_PAT secret is not configured. The VSIX is attached to"
+          echo "::warning::the GitHub Release above, but it was NOT published to the"
+          echo "::warning::VS Code Marketplace. Add VSCE_PAT in repo Settings → Secrets"
+          echo "::warning::to enable automatic publishing on future tags."

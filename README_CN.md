@@ -207,12 +207,33 @@ git push origin v1.0.4
 #    - 跑 smoke test（验证 AWS SDK 能正常 require）
 #    - 从 CHANGELOG.md 提取 release notes
 #    - 把 .vsix 附加到 GitHub Release
+#    - 如果配置了 VSCE_PAT，则一并发布到 VS Code Marketplace
 ```
 
 仅预览不修改：
 
 ```bash
 ./scripts/release.sh --dry
+```
+
+#### 发布到 VS Code Marketplace
+
+发布工作流会自动调用 `vsce publish`，但前提是仓库里配置了 `VSCE_PAT` secret（Settings → Secrets and variables → Actions）。没配置的话 VSIX 仍会附在 GitHub Release，只是不会推送到 Marketplace。
+
+启用自动发布的步骤：
+
+1. 用拥有 Marketplace `kiang` publisher 的微软账号登录 [dev.azure.com](https://dev.azure.com)。
+2. User settings → Personal Access Tokens → New Token。
+3. Scopes 选 **Marketplace (Manage)** — 这一个 scope 就够了。
+4. 拷贝 token，然后在本仓库 Settings → Secrets and variables → Actions → New repository secret：
+   - Name: `VSCE_PAT`
+   - Value: 上面拷贝的 token
+5. 下次 tag 发布时就会自动推到 Marketplace。
+
+如果 secret 缺失，workflow 会打印 warning 但 GitHub Release 照常发出。所以你也可以事后手动补发：
+
+```bash
+npx @vscode/vsce publish --packagePath ezimage-1.0.4.vsix
 ```
 
 ## <span id="feedback"></span>🤝 贡献与反馈

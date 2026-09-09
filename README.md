@@ -210,12 +210,33 @@ git push origin v1.0.4
 #    - smoke-tests it (AWS SDK must require correctly)
 #    - extracts release notes from CHANGELOG.md
 #    - attaches the .vsix to a GitHub Release
+#    - if VSCE_PAT is configured, also publishes to the VS Code Marketplace
 ```
 
 A dry run is available without modifying anything:
 
 ```bash
 ./scripts/release.sh --dry
+```
+
+#### Publishing to the VS Code Marketplace
+
+The release workflow calls `vsce publish` automatically — but only if a `VSCE_PAT` secret is configured in the repo (Settings → Secrets and variables → Actions). Without it the VSIX is still attached to the GitHub Release, just not pushed to the Marketplace.
+
+To enable automatic Marketplace publishing:
+
+1. Sign in to [dev.azure.com](https://dev.azure.com) using the same Microsoft account that owns the `kiang` publisher on the Marketplace.
+2. User settings → Personal Access Tokens → New Token.
+3. Scopes: **Marketplace (Manage)** — this is the only scope publish needs.
+4. Copy the token, then in this repo go to Settings → Secrets and variables → Actions → New repository secret:
+   - Name: `VSCE_PAT`
+   - Value: the token
+5. The next tagged release will publish automatically.
+
+If the secret is missing the release workflow logs a warning and the GitHub Release still goes out — so you can also publish manually afterward with:
+
+```bash
+npx @vscode/vsce publish --packagePath ezimage-1.0.4.vsix
 ```
 
 ## <span id="feedback"></span>🤝 Contribution & Feedback
