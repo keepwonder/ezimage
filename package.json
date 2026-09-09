@@ -21,6 +21,7 @@
   "activationEvents": [
     "onLanguage:markdown",
     "onCommand:ezimage.uploadClipboard",
+    "onCommand:ezimage.uploadClipboardAs",
     "onCommand:ezimage.uploadFile",
     "onCommand:ezimage.configure"
   ],
@@ -31,6 +32,12 @@
         "command": "ezimage.uploadClipboard",
         "title": "Upload Clipboard Image",
         "category": "EzImage"
+      },
+      {
+        "command": "ezimage.uploadClipboardAs",
+        "title": "Upload Clipboard Image As…",
+        "category": "EzImage",
+        "description": "Pick the insert format (Markdown / HTML center / HTML figure) for this upload only."
       },
       {
         "command": "ezimage.uploadFile",
@@ -108,6 +115,50 @@
           "type": "boolean",
           "default": false,
           "description": "Suppress the warning shown when the sharp compression engine is unavailable"
+        },
+        "ezimage.insertFormat": {
+          "type": "string",
+          "enum": [
+            "markdown",
+            "html-center",
+            "html-figure",
+            "custom"
+          ],
+          "enumDescriptions": [
+            "Plain Markdown image: ![alt](url)",
+            "Centered HTML <img> wrapped in <div align=\"center\">",
+            "Semantic HTML5 <figure> with <figcaption>",
+            "Use your own template (ezimage.insertCustomTemplate)"
+          ],
+          "default": "markdown",
+          "description": "How to render the image snippet that gets inserted into the editor"
+        },
+        "ezimage.insertWidth": {
+          "type": "string",
+          "default": "100%",
+          "pattern": "^(|auto|[0-9]+(%|px|em|rem|vw|vh)?)$",
+          "description": "Width attribute used in {width} for HTML templates (e.g. 65%, 600px, auto). Empty = omit the width attribute."
+        },
+        "ezimage.insertAlign": {
+          "type": "string",
+          "enum": [
+            "none",
+            "left",
+            "center",
+            "right"
+          ],
+          "default": "none",
+          "description": "Alignment for HTML templates. 'none' skips the wrapper <div>."
+        },
+        "ezimage.insertCustomTemplate": {
+          "type": "string",
+          "default": "",
+          "description": "Custom insert template used when ezimage.insertFormat = 'custom'. Variables: {url} {filename} {name} {ext} {width} {align} {alt}."
+        },
+        "ezimage.insertIncludeName": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the source filename as the alt text / figcaption (ignored if insertCustomAlt is set)."
         }
       }
     },
@@ -138,6 +189,7 @@
     "vscode:prepublish": "npm run verify && npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node --test test/*.test.js",
     "verify": "python3 scripts/package-vsix.py --verify ezimage-dev.vsix && rm -f ezimage-dev.vsix",
     "package": "npm run compile && python3 scripts/package-vsix.py --verify ezimage-dev.vsix",
     "vsce:package": "npm run compile && vsce package --no-git-tag-version",

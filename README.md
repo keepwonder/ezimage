@@ -105,6 +105,37 @@ After installation, follow these steps to configure:
 | `ezimage.quality` | `85` | WebP quality (1–100). Higher = larger files, better fidelity. |
 | `ezimage.autoInstallSharp` | `true` | When `sharp` is missing, prompt to install the native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`. |
 | `ezimage.disableCompressionNotice` | `false` | Suppress the warning shown when the sharp compression engine is unavailable. |
+| `ezimage.insertFormat` | `markdown` | How to render the inserted snippet. One of `markdown` / `html-center` / `html-figure` / `custom`. See [Insert format templates](#insert-format-templates). |
+| `ezimage.insertWidth` | `100%` | Width attribute used in HTML templates (`{width}`). e.g. `65%`, `600px`, `auto`. Empty string omits the attribute. |
+| `ezimage.insertAlign` | `none` | Alignment for HTML templates. `none` skips the wrapper `<div>`. |
+| `ezimage.insertCustomTemplate` | `""` | Custom template used when `insertFormat = custom`. Variables: `{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`. |
+| `ezimage.insertIncludeName` | `true` | Use the source filename as alt text / figcaption. |
+
+### Insert format templates
+
+Three built-in presets cover the most common shapes:
+
+| Format | Output |
+| :--- | :--- |
+| `markdown` | `![photo](https://pub.example.com/2026/09/photo-abc123.webp)` |
+| `html-center` | `<div align="center"><img src="https://pub.example.com/2026/09/photo-abc123.webp" alt="photo" width="65%"></div>` |
+| `html-figure` | `<figure><img src="https://pub.example.com/2026/09/photo-abc123.webp" alt="photo" width="65%"><figcaption>photo</figcaption></figure>` |
+
+For full control, set `ezimage.insertFormat = custom` and define `ezimage.insertCustomTemplate` with any combination of variables:
+
+| Variable | Resolves to |
+| :--- | :--- |
+| `{url}` | Public R2 URL after upload |
+| `{filename}` | Full filename including extension, e.g. `photo.png` |
+| `{name}` | Filename without extension, e.g. `photo` |
+| `{ext}` | Extension without dot, e.g. `png` |
+| `{width}` | `ezimage.insertWidth` value (empty → no width attribute) |
+| `{align}` | `ezimage.insertAlign` value |
+| `{alt}` | Alt text (filename, or `insertCustomAlt` when set) |
+
+Unknown placeholders are left in place so a typo in your template stays visible instead of being silently dropped.
+
+**One-shot override**: the command `EzImage: Upload Clipboard Image As…` lets you pick a different format for a single upload without changing the default. Bind it to a shortcut via *File → Preferences → Keyboard Shortcuts → search "ezimage.uploadClipboardAs"* if you want a dedicated key (e.g. `Ctrl+Alt+Shift+V`) for HTML-centered inserts.
 
 ### R2 setup walkthrough
 

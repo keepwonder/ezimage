@@ -3,8 +3,9 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import { spawn } from 'child_process';
-import { EzImageSettings, IUploader } from './types';
+import { EzImageSettings, IUploader, InsertFormat } from './types';
 import { UploaderFactory } from './uploaders';
+import { renderInsert } from './insertTemplate';
 
 // sharp is a native module with a platform-specific binary; we deliberately
 // don't bundle it. Loading is deferred until activate() so we can route any
@@ -84,6 +85,13 @@ function getSettings(): EzImageSettings {
     compress: config.get<boolean>('compress') ?? true,
     maxWidth: config.get<number>('maxWidth') || 1920,
     quality: config.get<number>('quality') || 85,
+    insert: {
+      format: (config.get<'markdown' | 'html-center' | 'html-figure' | 'custom'>('insertFormat') ?? 'markdown'),
+      width: config.get<string>('insertWidth') ?? '100%',
+      align: (config.get<'none' | 'left' | 'center' | 'right'>('insertAlign') ?? 'none'),
+      customTemplate: config.get<string>('insertCustomTemplate') ?? '',
+      includeName: config.get<boolean>('insertIncludeName') ?? true,
+    },
   };
 }
 
@@ -344,7 +352,12 @@ function isSharpPresentOnDisk(extensionPath: string): boolean {
   }
 }
 
-async function uploadAndInsert(filePath: string, editor: vscode.TextEditor, isTemp: boolean = false) {
+async function uploadAndInsert(
+  filePath: string,
+  editor: vscode.TextEditor,
+  isTemp: boolean = false,
+  overrideFormat?: InsertFormat,
+) {
   const settings = getSettings();
   const error = validateSettings(settings);
   if (error) {
@@ -454,10 +467,18 @@ async function uploadAndInsert(filePath: string, editor: vscode.TextEditor, isTe
       }
 
       const position = editor.selection.active;
-      const markdown = `![${originalName}](${result.url})`;
+      const insertSettings = overrideFormat
+        ? { ...settings.insert, format: overrideFormat }
+        : settings.insert;
+      const { snippet, trailingNewlines } = renderInsert({
+        url: result.url,
+        filename: originalName,
+        settings: insertSettings,
+      });
+      const insertText = snippet + '\n'.repeat(trailingNewlines);
 
       await editor.edit((editBuilder) => {
-        editBuilder.insert(position, markdown);
+        editBuilder.insert(position, insertText);
       });
 
       vscode.window.showInformationMessage(`Uploaded successfully!`);
@@ -668,6 +689,46 @@ export function activate(context: vscode.ExtensionContext) {
     await uploadAndInsert(tempPath, editor, true);
   });
 
+  /**
+   * Same as `uploadClipboard` but always uses a specific insert format
+   * for this single invocation, regardless of `ezimage.insertFormat`. Lets
+   * users keep their default as Markdown but press a custom shortcut
+   * (configured in Keyboard Shortcuts) to get an HTML-centered insert.
+   */
+  const uploadClipboardAsCmd = vscode.commands.registerCommand('ezimage.uploadClipboardAs', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) return;
+
+    const formatChoices: { label: string; value: InsertFormat; description: string }[] = [
+      { label: 'Markdown',          value: 'markdown',     description: '![alt](url)' },
+      { label: 'HTML Centered',     value: 'html-center',  description: '<div align="center"><img …></div>' },
+      { label: 'HTML <figure>',     value: 'html-figure',  description: '<figure><img><figcaption></figure>' },
+    ];
+    const picked = await vscode.window.showQuickPick(formatChoices, {
+      placeHolder: 'Insert this upload as…',
+      title: 'EzImage: Choose insert format',
+    });
+    if (!picked) return;
+
+    const clipboardFile = await getClipboardImageFilePath();
+    if (clipboardFile.filePath) {
+      await uploadAndInsert(clipboardFile.filePath, editor, false, picked.value);
+      return;
+    }
+    if (clipboardFile.containsFileReference) {
+      vscode.window.showErrorMessage('EzImage found a copied file but could not read it as a supported image. See Output > EzImage for clipboard details.');
+      return;
+    }
+
+    const tempPath = await saveClipboardImage();
+    if (!tempPath) {
+      vscode.window.showErrorMessage('No image found in clipboard');
+      return;
+    }
+
+    await uploadAndInsert(tempPath, editor, true, picked.value);
+  });
+
   const uploadFileCmd = vscode.commands.registerCommand('ezimage.uploadFile', async () => {
     const editor = vscode.window.activeTextEditor;
     if (!editor) return;
@@ -688,7 +749,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('workbench.action.openSettings', 'ezimage');
   });
 
-  context.subscriptions.push(outputChannel, dropProvider, uploadClipboardCmd, uploadFileCmd, configureCmd);
+  context.subscriptions.push(outputChannel, dropProvider, uploadClipboardCmd, uploadClipboardAsCmd, uploadFileCmd, configureCmd);
 }
 
 export function deactivate() { }

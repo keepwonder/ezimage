@@ -105,6 +105,37 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 | `ezimage.quality` | `85` | WebP 质量（1–100），数值越高画质越好、体积越大。 |
 | `ezimage.autoInstallSharp` | `true` | 当 `sharp` 缺失时，首次上传会引导一键安装。需要 Node.js ≥ 18.17 且 `npm` 在 `PATH` 上。 |
 | `ezimage.disableCompressionNotice` | `false` | 当 sharp 加载失败时是否静默（默认会提示一次）。 |
+| `ezimage.insertFormat` | `markdown` | 插入到编辑器的片段格式。`markdown` / `html-center` / `html-figure` / `custom`。详见 [插入格式模板](#插入格式模板)。 |
+| `ezimage.insertWidth` | `100%` | HTML 模板里 `{width}` 渲染的值。例如 `65%`、`600px`、`auto`。空字符串表示不输出 width 属性。 |
+| `ezimage.insertAlign` | `none` | HTML 模板的对齐方式。`none` 不包 `<div>` 包裹层。 |
+| `ezimage.insertCustomTemplate` | `""` | `insertFormat = custom` 时使用的模板字符串。可用变量：`{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`。 |
+| `ezimage.insertIncludeName` | `true` | 是否用源文件名作为 alt 文本 / figcaption。 |
+
+### 插入格式模板
+
+三个内置预设覆盖最常见场景：
+
+| 格式 | 输出示例 |
+| :--- | :--- |
+| `markdown` | `![photo](https://pub.example.com/2026/09/photo-abc123.webp)` |
+| `html-center` | `<div align="center"><img src="..." alt="photo" width="65%"></div>` |
+| `html-figure` | `<figure><img src="..." alt="photo" width="65%"><figcaption>photo</figcaption></figure>` |
+
+想要完全自定义？把 `ezimage.insertFormat` 设为 `custom`，再在 `ezimage.insertCustomTemplate` 里写自己的模板，变量如下：
+
+| 变量 | 解析为 |
+| :--- | :--- |
+| `{url}` | 上传后的公开 R2 URL |
+| `{filename}` | 完整文件名（含扩展名），例如 `photo.png` |
+| `{name}` | 不含扩展名的文件名，例如 `photo` |
+| `{ext}` | 不带点号的扩展名，例如 `png` |
+| `{width}` | `ezimage.insertWidth` 的值（空 → 不输出 width） |
+| `{align}` | `ezimage.insertAlign` 的值 |
+| `{alt}` | alt 文本（默认用文件名，可被 `insertCustomAlt` 覆盖） |
+
+未识别的占位符会**原样保留**——你写错时不会被悄悄吞掉，方便排查。
+
+**单次覆盖**：命令 `EzImage: Upload Clipboard Image As…` 允许每次上传时选不同格式，不影响默认设置。如果想绑快捷键（比如 `Ctrl+Alt+Shift+V` 专用于 HTML 居中），去 *File → Preferences → Keyboard Shortcuts* 搜 `ezimage.uploadClipboardAs`。
 
 > [!TIP]
 > **觉得配置太复杂？** 我们准备了 [📘 Cloudflare R2 手把手配置指南](docs/R2_GUIDE_CN.md)，包含截图和报错排查。
