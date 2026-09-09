@@ -3,7 +3,7 @@ name: Publish Release
 on:
   push:
     tags:
-      - 'v*' # Trigger on tags starting with v, e.g., v1.0.0
+      - 'v*' # Trigger on tags starting with v, e.g., v1.0.3
 
 permissions:
   contents: write
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history so vsce can compute the version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,22 +24,72 @@ jobs:
           node-version: 20
           cache: 'npm'
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install Dependencies
-        run: npm install
+        run: npm install --no-audit --no-fund
 
       - name: Build Extension
         run: npm run compile
 
-      - name: Package Extension
-        run: npx vsce package -o ezimage.vsix
+      - name: Package VSIX (real vsce)
+        run: npx --yes @vscode/vsce package --no-git-tag-version --out ezimage.vsix
+
+      # Pull the version straight out of package.json so the VSIX filename
+      # matches the tag even if standard-version was run with --release-as.
+      - name: Compute version + VSIX filename
+        id: meta
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "vsix=ezimage-${VERSION}.vsix" >> "$GITHUB_OUTPUT"
+          mv ezimage.vsix "ezimage-${VERSION}.vsix"
+
+      - name: Smoke-test packaged VSIX
+        run: |
+          mkdir -p /tmp/vsix-extract
+          unzip -q "ezimage-${{ steps.meta.outputs.version }}.vsix" -d /tmp/vsix-extract
+          cd /tmp/vsix-extract/extension
+          node -e "const s = require('@aws-sdk/client-s3'); if (typeof s.S3Client !== 'function') process.exit(1); console.log('S3Client ok')"
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          # Find the section for the current version in CHANGELOG.md and
+          # extract everything until the next version heading (or end of file).
+          VERSION="${{ steps.meta.outputs.version }}"
+          python3 - <<PY
+          import re, sys, pathlib
+          text = pathlib.Path('CHANGELOG.md').read_text(encoding='utf-8')
+          version = "$VERSION"
+          # Match: ## [VERSION](...) ... until next ## heading
+          pattern = re.compile(
+              rf'^## \[{re.escape(version)}\][^\n]*\n(.*?)(?=^## |\Z)',
+              re.MULTILINE | re.DOTALL,
+          )
+          m = pattern.search(text)
+          if not m:
+              print(f"::warning::No CHANGELOG entry found for {version}; using auto-generated notes.")
+              sys.exit(0)
+          notes = m.group(1).strip()
+          # Drop the empty "compare" link footer if present
+          notes = re.sub(r'^\[.*?\]:\s*https?://.*$', '', notes, flags=re.MULTILINE).strip()
+          # Write to a file we can read in the next step
+          pathlib.Path('release-notes.md').write_text(notes, encoding='utf-8')
+          print(f"Extracted {len(notes)} chars of release notes for v{version}")
+          PY
 
       - name: Create GitHub Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
-          files: ezimage.vsix
+          tag_name: ${{ github.ref_name }}
+          name: "EzImage v${{ steps.meta.outputs.version }}"
+          body_path: release-notes.md
+          files: ezimage-${{ steps.meta.outputs.version }}.vsix
           draft: false
           prerelease: false
-          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
