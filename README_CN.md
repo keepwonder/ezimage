@@ -4,7 +4,7 @@
   <p><b>为 VS Code & AI-first IDEs 打造的极简、高效、支持多平台的图床上传插件</b></p>
 
   <p>
-    <img src="https://img.shields.io/badge/Version-1.0.3-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/github/v/release/keepwonder/ezimage?display_version=1.0.4&include_prereleases" alt="Version" />
     <img src="https://img.shields.io/badge/Platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/IDE-VS%20Code%20%7C%20Antigravity%20%7C%20Cursor%20%7C%20Windsurf%20%7C%20Trae-blueviolet.svg" alt="IDEs" />
     <img src="https://img.shields.io/badge/License-MIT-orange.svg" alt="License" />
