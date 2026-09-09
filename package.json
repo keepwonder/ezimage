@@ -59,7 +59,7 @@
             "r2"
           ],
           "default": "r2",
-          "markdownDescription": "## Storage\n\nWhere uploaded images go. Currently only Cloudflare R2 is wired in; AWS S3, Aliyun OSS and Tencent COS are on the roadmap."
+          "description": "Where uploaded images go. Currently only Cloudflare R2 is wired in; AWS S3, Aliyun OSS and Tencent COS are on the roadmap."
         },
         "ezimage.r2.accountId": {
           "type": "string",
@@ -94,7 +94,7 @@
         "ezimage.compress": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "## Compression\n\nWhether to convert images to WebP before upload. Disable if you want pixel-perfect originals or your bucket already handles optimization."
+          "description": "Convert images to WebP before upload. Disable if you want pixel-perfect originals or your bucket already handles optimization."
         },
         "ezimage.maxWidth": {
           "type": "number",
@@ -131,7 +131,7 @@
             "Use your own template (see `ezimage.insertCustomTemplate`)."
           ],
           "default": "markdown",
-          "markdownDescription": "## Insert format\n\nHow the upload appears in your Markdown document. See the README for the full variable list."
+          "description": "How the upload appears in your Markdown document. See the README for the full variable list."
         },
         "ezimage.insertWidth": {
           "type": "string",
@@ -173,7 +173,7 @@
             "简体中文"
           ],
           "default": "auto",
-          "markdownDescription": "## Language\n\nDisplay language for EzImage prompts, errors and info messages. Settings panel labels themselves always follow VS Code (not this setting)."
+          "description": "Display language for EzImage prompts, errors and info messages. Settings panel labels themselves always follow VS Code (not this setting)."
         }
       }
     },
