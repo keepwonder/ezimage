@@ -106,8 +106,25 @@ jobs:
       # If the secret is missing, this step is skipped and a warning is printed
       # so the GitHub Release still goes out. You can re-run publish later:
       #   npx vsce publish --packagePath ezimage-${{ steps.meta.outputs.version }}.vsix
+      #
+      # We probe the secret from a single step with always() guard, then set an
+      # output flag the conditional steps read. This sidesteps the GitHub Actions
+      # limitation that bans the `secrets.*` context inside step-level `if`.
+      - name: Detect VSCE_PAT
+        id: detect-pat
+        run: |
+          if [ -n "$VSCE_PAT_SECRET" ]; then
+            echo "has_pat=true" >> "$GITHUB_OUTPUT"
+            echo "VSCE_PAT secret detected."
+          else
+            echo "has_pat=false" >> "$GITHUB_OUTPUT"
+            echo "VSCE_PAT secret NOT detected."
+          fi
+        env:
+          VSCE_PAT_SECRET: ${{ secrets.VSCE_PAT }}
+
       - name: Publish to VS Code Marketplace
-        if: ${{ secrets.VSCE_PAT != '' }}
+        if: steps.detect-pat.outputs.has_pat == 'true'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
@@ -120,7 +137,7 @@ jobs:
           echo "Published successfully."
 
       - name: Marketplace secret missing
-        if: ${{ secrets.VSCE_PAT == '' }}
+        if: steps.detect-pat.outputs.has_pat != 'true'
         run: |
           echo "::warning::VSCE_PAT secret is not configured. The VSIX is attached to"
           echo "::warning::the GitHub Release above, but it was NOT published to the"
