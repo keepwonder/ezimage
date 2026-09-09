@@ -59,62 +59,62 @@
             "r2"
           ],
           "default": "r2",
-          "description": "## Storage\n\nWhere uploaded images are stored. Currently only **Cloudflare R2** is wired in. AWS S3, Aliyun OSS, and Tencent COS are roadmap items."
+          "markdownDescription": "## 📦 Storage\n\nWhere uploaded images go. Currently only **Cloudflare R2** is wired in; AWS S3, Aliyun OSS and Tencent COS are on the roadmap."
         },
         "ezimage.r2.accountId": {
           "type": "string",
           "default": "",
-          "description": "Cloudflare Account ID. Found in the Cloudflare dashboard sidebar."
+          "description": "Cloudflare Account ID. Found in the dashboard sidebar."
         },
         "ezimage.r2.accessKeyId": {
           "type": "string",
           "default": "",
-          "description": "R2 API token Access Key ID. Generate at *R2 → Manage R2 API Tokens → Create API token*."
+          "description": "R2 API token Access Key ID. Create at *R2 → Manage R2 API Tokens → Create API token*."
         },
         "ezimage.r2.secretAccessKey": {
           "type": "string",
           "default": "",
-          "description": "R2 API token Secret Access Key. Shown once when the token is created — copy immediately."
+          "description": "R2 API token Secret Access Key. Shown once at creation — copy it immediately."
         },
         "ezimage.r2.bucketName": {
           "type": "string",
           "default": "",
-          "description": "Name of the R2 bucket images are uploaded into. Create one at *R2 → Create bucket* if you don't have one."
+          "description": "Bucket name. Create one at *R2 → Create bucket* if you don't have one yet."
         },
         "ezimage.r2.publicUrl": {
           "type": "string",
           "default": "",
-          "description": "Public distribution URL for the bucket, e.g. `https://pub-xxxx.r2.dev`. Enable *Public Access* on the bucket and copy the URL from the bucket settings page."
+          "description": "Bucket's public distribution URL (e.g. `https://pub-xxxx.r2.dev`). Enable *Public Access* on the bucket and copy the URL."
         },
         "ezimage.pathTemplate": {
           "type": "string",
           "default": "{yyyy}/{MM}/{timestamp}-{random}.{ext}",
-          "markdownDescription": "Path template for uploaded objects.\n\n---\n\nAvailable variables: `{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`.\n\nExample: `{yyyy}/{MM}/{timestamp}-{random}.{ext}` produces `2026/09/1736422488123-abc123.png`."
+          "description": "Path template for uploaded objects. Variables: `{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`."
         },
         "ezimage.compress": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "## Compression\n\nEnable WebP conversion before upload. Disable if you want pixel-perfect originals or your bucket already handles optimization."
+          "markdownDescription": "## 🗜 Compression\n\nWhether to convert images to WebP before upload. Disable if you want pixel-perfect originals or your bucket already handles optimization."
         },
         "ezimage.maxWidth": {
           "type": "number",
           "default": 1920,
-          "description": "Maximum width in pixels. Images wider than this are downscaled before encoding. Set to `0` to keep original dimensions. Most blog readers don't benefit from widths beyond 1920."
+          "description": "Max width in pixels. Images wider than this are downscaled before encoding. Set to `0` to keep original size."
         },
         "ezimage.quality": {
           "type": "number",
           "default": 85,
-          "description": "WebP quality (1–100). Higher = larger files, better fidelity. 80–85 is a good sweet spot for screenshots."
+          "description": "WebP quality (1–100). 80–85 is a good sweet spot for screenshots."
         },
         "ezimage.autoInstallSharp": {
           "type": "boolean",
           "default": true,
-          "description": "When `sharp` is missing, prompt to install the native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`."
+          "description": "Prompt to install the sharp native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`."
         },
         "ezimage.disableCompressionNotice": {
           "type": "boolean",
           "default": false,
-          "description": "Suppress the warning shown when the sharp compression engine is unavailable (e.g. on an Electron/Node ABI mismatch)."
+          "description": "Suppress the warning when sharp fails to load (e.g. Electron/Node ABI mismatch)."
         },
         "ezimage.insertFormat": {
           "type": "string",
@@ -126,20 +126,20 @@
             "html-center"
           ],
           "enumDescriptions": [
-            "Plain Markdown image: `![alt](url)`",
-            "HTML `<img>` wrapped in `<div align=\"…\">`. `align` from `ezimage.insertAlign`; `none` drops the wrapper.",
-            "Semantic HTML5 `<figure>` with `<figcaption>`. `align` is ignored — use `html-wrap` if you need alignment.",
+            "`![alt](url)` — plain Markdown image.",
+            "`<img>` wrapped in `<div align=\"…\">`. `align` is controlled by `ezimage.insertAlign`; `none` drops the wrapper.",
+            "Semantic `<figure>` with `<figcaption>`. `align` is ignored — use `html-wrap` if you need alignment.",
             "Use your own template (see `ezimage.insertCustomTemplate`).",
-            "Deprecated alias for `html-wrap`, kept for backward compatibility."
+            "Deprecated alias for `html-wrap`."
           ],
           "default": "markdown",
-          "markdownDescription": "## Insert format\n\nHow the upload appears in your Markdown document.\n\n---\n\n**Common choices:**\n\n- `markdown` for plain blog posts\n- `html-wrap` for HTML centering with a width attribute\n- `html-figure` for semantic documentation with captions\n\nSee [Insert format templates](https://github.com/keepwonder/ezimage#insert-format-templates) for details and variables."
+          "markdownDescription": "## 📝 Insert format\n\nHow the upload appears in your Markdown document. See the README §Insert format templates for the full variable list."
         },
         "ezimage.insertWidth": {
           "type": "string",
           "default": "100%",
           "pattern": "^(|auto|[0-9]+(%|px|em|rem|vw|vh)?)$",
-          "description": "Width attribute for HTML templates (`{width}`). Examples: `65%` for responsive images, `600px` for a fixed size, `auto` for natural size. Empty = omit the width attribute entirely."
+          "description": "Width attribute for HTML templates. Examples: `65%`, `600px`, `auto`. Empty = omit the attribute."
         },
         "ezimage.insertAlign": {
           "type": "string",
@@ -150,12 +150,12 @@
             "right"
           ],
           "default": "none",
-          "description": "Alignment for HTML templates. `none` drops the wrapper `<div>` entirely — pick this when you want a bare `<img>` with just a width attribute."
+          "description": "Alignment for HTML templates. `none` drops the `<div>` wrapper entirely."
         },
         "ezimage.insertCustomTemplate": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Custom insert template, used when `ezimage.insertFormat = 'custom'`.\n\n---\n\nVariables: `{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`.\n\nExample: `<a href=\"{url}\" target=\"_blank\">{alt}</a>`\n\nUnknown placeholders are left as-is so typos are visible."
+          "description": "Custom insert template used when `ezimage.insertFormat = 'custom'`. Variables: `{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`."
         },
         "ezimage.insertIncludeName": {
           "type": "boolean",
@@ -175,7 +175,7 @@
             "简体中文"
           ],
           "default": "auto",
-          "markdownDescription": "## Language\n\nDisplay language for EzImage prompts, errors, and info messages.\n\n---\n\n`auto` follows VS Code's display language. The Settings panel labels themselves always follow VS Code (not this setting) — that limitation is described in [the README](https://github.com/keepwonder/ezimage#what-gets-translated)."
+          "markdownDescription": "## 🌐 Language\n\nDisplay language for EzImage prompts, errors and info messages. Settings panel labels themselves always follow VS Code (not this setting)."
         }
       }
     },
