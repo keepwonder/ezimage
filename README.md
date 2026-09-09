@@ -161,7 +161,25 @@ EzImage ships with English and Simplified Chinese translations. The display lang
 | `en` | Force English regardless of VS Code locale. |
 | `zh-CN` | Force Simplified Chinese. |
 
-Language changes take effect immediately — no reload needed. The next prompt, error, or info message you trigger will use the new locale.
+Language changes take effect immediately — no reload needed.
+
+### What gets translated
+
+Only the **runtime UI** that EzImage generates itself — prompts, error dialogs, the Output channel, the format-picker menu. Concretely:
+
+- ✅ All `vscode.window.showErrorMessage` / `showWarningMessage` / `showInformationMessage` text
+- ✅ All `vscode.window.showQuickPick` labels and descriptions (e.g. the "Insert this upload as…" picker)
+- ✅ All text written to the Output → EzImage channel
+- ✅ `vscode.window.withProgress` titles and progress messages
+- ❌ The labels and descriptions in the **Settings panel** itself
+
+### Why the Settings panel stays in English (or VS Code's language)
+
+VS Code reads those strings from `package.json` and picks a translation only from the VS Code Marketplace's own `package.nls.<locale>.json` files, keyed by the VS Code **display language**, not the per-extension setting. There is no public API for an extension to override those strings at runtime.
+
+In practice this is fine: the Settings panel labels describe *what* a setting does ("Maximum width for compressed images"), not *when* something failed. The user-facing runtime messages — which the user actually sees while uploading — are what `ezimage.language` controls.
+
+If you want the *entire* VS Code UI in Chinese (including EzImage's settings panel), run `Configure Display Language` from the command palette and pick `中文 (简体)`. That's a VS Code-level switch, not EzImage's.
 
 ### Adding a new translation
 

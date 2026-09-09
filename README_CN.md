@@ -160,7 +160,25 @@ EzImage 自带英文和简体中文翻译。显示语言由 `ezimage.language` �
 | `en` | 强制英文。 |
 | `zh-CN` | 强制简体中文。 |
 
-语言切换**即时生效**，无需重启窗口。下一次弹窗、错误或日志提示就会用新语言。
+语言切换**即时生效**，无需重启窗口。
+
+### 哪些文案会被翻译
+
+只有 **EzImage 自己弹出的运行时界面**：
+
+- ✅ `vscode.window.showErrorMessage` / `showWarningMessage` / `showInformationMessage` 的所有文案
+- ✅ `vscode.window.showQuickPick` 的 label 和 description（比如「上传为…」选择菜单）
+- ✅ 输出频道里所有日志
+- ✅ `vscode.window.withProgress` 的进度标题
+- ❌ **设置面板里的 label 和 description**
+
+### 为什么设置面板不能跟随扩展设置
+
+VS Code 设置面板的 label/description 直接从 `package.json` 读，而 VS Code 用它**自己**的 `package.nls.<locale>.json`（这个机制受 Marketplace 控制）来翻译，并且只跟 VS Code 的**主语言**走——不接受扩展在运行时覆盖。
+
+这其实是合理的：设置面板的文案描述的是「这个选项是干嘛的」，用户看到的时间很短；扩展运行时弹窗才是用户长时间面对的——这才是 `ezimage.language` 控制的真正场景。
+
+如果你**真的**想让设置面板也变中文，那就用命令面板的 `Configure Display Language` 把 VS Code 整个切到中文——这是 VS Code 层级的设置，不是 EzImage 的。
 
 ### 添加新翻译
 
