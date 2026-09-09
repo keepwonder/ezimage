@@ -222,7 +222,7 @@
     "vscode:prepublish": "npm run verify && npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "npm run compile && node --test test/*.test.js",
+    "test": "npm run compile && node test/run-tests.js",
     "verify": "python3 scripts/package-vsix.py --verify ezimage-dev.vsix && rm -f ezimage-dev.vsix",
     "package": "npm run compile && python3 scripts/package-vsix.py --verify ezimage-dev.vsix",
     "vsce:package": "npm run compile && vsce package --no-git-tag-version",
