@@ -13,6 +13,7 @@ const {
     t,
     mapVSCodeLocale,
     configureI18n,
+    getCurrentLocale,
     findMissingKeys,
     findExtraKeys,
 } = require(path.join(__dirname, '..', 'out', 'i18n.js'));
@@ -114,4 +115,31 @@ test('findMissingKeys returns empty array for in-sync bundles', () => {
 test('findExtraKeys returns empty array for in-sync bundles', () => {
     assert.deepEqual(findExtraKeys('zh-CN'), []);
     assert.deepEqual(findExtraKeys('en'), []);
+});
+
+// ---------------------------------------------------------------------------
+// Runtime configuration (simulates the live onDidChangeConfiguration flow)
+// ---------------------------------------------------------------------------
+test('configureI18n can be re-called and takes effect immediately', () => {
+    configureI18n('en', 'en');
+    assert.equal(t('info.uploaded'), 'Uploaded successfully!');
+    assert.equal(getCurrentLocale(), 'en');
+
+    // User opens settings.json and flips the value to zh-CN. The change
+    // listener in extension.ts calls configureI18n again — no reload.
+    configureI18n('zh-CN', 'zh-CN');
+    assert.equal(t('info.uploaded'), '上传成功！');
+    assert.equal(getCurrentLocale(), 'zh-CN');
+
+    // Switching back to en works without an intermediate reset.
+    configureI18n('en', 'en');
+    assert.equal(t('info.uploaded'), 'Uploaded successfully!');
+
+    // 'auto' re-evaluates the VS Code locale each time the user changes it.
+    configureI18n('auto', 'en');
+    assert.equal(t('info.uploaded'), 'Uploaded successfully!');
+    configureI18n('auto', 'zh-CN');
+    assert.equal(t('info.uploaded'), '上传成功！');
+    configureI18n('auto', 'ja-JP');
+    assert.equal(t('info.uploaded'), 'Uploaded successfully!');
 });

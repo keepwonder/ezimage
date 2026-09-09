@@ -659,15 +659,32 @@ class EzImageDropProvider implements vscode.DocumentDropEditProvider {
   }
 }
 
-export function activate(context: vscode.ExtensionContext) {
-  outputChannel = vscode.window.createOutputChannel('EzImage');
-
-  // Wire up i18n. The user's `ezimage.language` setting wins; otherwise we
-  // track VS Code's display language.
+/**
+ * Re-read the language setting and push it into the i18n module. Called at
+ * activation and on every relevant config change so users see the new
+ * language without reloading the window.
+ */
+function applyI18nSettings(): void {
   const config = vscode.workspace.getConfiguration('ezimage');
   configureI18n(
     config.get<'auto' | 'en' | 'zh-CN'>('language') ?? 'auto',
     vscode.env.language,
+  );
+}
+
+export function activate(context: vscode.ExtensionContext) {
+  outputChannel = vscode.window.createOutputChannel('EzImage');
+
+  // Wire up i18n. The user's `ezimage.language` setting wins; otherwise we
+  // track VS Code's display language. The listener below makes language
+  // changes take effect immediately, without a window reload.
+  applyI18nSettings();
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      if (event.affectsConfiguration('ezimage.language')) {
+        applyI18nSettings();
+      }
+    }),
   );
 
   log('EzImage is now active', 'info');

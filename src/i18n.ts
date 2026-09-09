@@ -56,6 +56,17 @@ export function configureI18n(preference: LanguagePreference, vscodeLocale: stri
     cachedVSCodeLocale = vscodeLocale;
 }
 
+/** Diagnostic — useful for tests and the status bar. Not for hot paths. */
+export function getCurrentLocale(): SupportedLocale {
+    return currentLocale();
+}
+
+/** Reset state. Test-only helper; production code should never call this. */
+export function resetI18nForTesting(): void {
+    cachedPreference = null;
+    cachedVSCodeLocale = null;
+}
+
 function currentLocale(): SupportedLocale {
     if (cachedPreference === null || cachedVSCodeLocale === null) {
         // No host has called configureI18n yet (e.g. unit tests) — default

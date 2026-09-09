@@ -161,7 +161,7 @@ EzImage ships with English and Simplified Chinese translations. The display lang
 | `en` | Force English regardless of VS Code locale. |
 | `zh-CN` | Force Simplified Chinese. |
 
-When you change the setting, reload the window (`Developer: Reload Window`) for the change to take effect.
+Language changes take effect immediately — no reload needed. The next prompt, error, or info message you trigger will use the new locale.
 
 ### Adding a new translation
 
