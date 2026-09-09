@@ -92,6 +92,9 @@ After installation, follow these steps to configure:
 
 ### All settings
 
+Settings are listed in the order they appear in VS Code's Settings panel, which follows an explicit `order` property in `package.json`. Within each group, the read order matches the most common user workflow.
+
+**Storage** — where uploaded images go
 | Key | Default | Description |
 | :--- | :--- | :--- |
 | `ezimage.provider` | `r2` | Storage provider. Currently only `r2` is wired in; S3/OSS/COS are roadmap items. |
@@ -101,26 +104,39 @@ After installation, follow these steps to configure:
 | `ezimage.r2.bucketName` | `""` | R2 bucket name. |
 | `ezimage.r2.publicUrl` | `""` | Public distribution URL, e.g. `https://pub-xxxx.r2.dev`. |
 | `ezimage.pathTemplate` | `{yyyy}/{MM}/{timestamp}-{random}.{ext}` | Path template for uploaded objects. Available variables: `{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`. |
+
+**Compression** — what happens to images before upload
+| Key | Default | Description |
+| :--- | :--- | :--- |
 | `ezimage.compress` | `true` | Enable WebP compression before upload. |
 | `ezimage.maxWidth` | `1920` | Maximum width in pixels; images wider than this are downscaled before encoding. Set to `0` to keep original dimensions. |
 | `ezimage.quality` | `85` | WebP quality (1–100). Higher = larger files, better fidelity. |
 | `ezimage.autoInstallSharp` | `true` | When `sharp` is missing, prompt to install the native binary on first use. Requires Node.js ≥ 18.17 and `npm` on `PATH`. |
 | `ezimage.disableCompressionNotice` | `false` | Suppress the warning shown when the sharp compression engine is unavailable. |
-| `ezimage.insertFormat` | `markdown` | How to render the inserted snippet. One of `markdown` / `html-center` / `html-figure` / `custom`. See [Insert format templates](#insert-format-templates). |
+
+**Insert format** — how the snippet appears in your Markdown
+| Key | Default | Description |
+| :--- | :--- | :--- |
+| `ezimage.insertFormat` | `markdown` | How to render the inserted snippet. One of `markdown` / `html-wrap` / `html-figure` / `custom`. See [Insert format templates](#insert-format-templates). |
 | `ezimage.insertWidth` | `100%` | Width attribute used in HTML templates (`{width}`). e.g. `65%`, `600px`, `auto`. Empty string omits the attribute. |
 | `ezimage.insertAlign` | `none` | Alignment for HTML templates. `none` skips the wrapper `<div>`. |
 | `ezimage.insertCustomTemplate` | `""` | Custom template used when `insertFormat = custom`. Variables: `{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`. |
 | `ezimage.insertIncludeName` | `true` | Use the source filename as alt text / figcaption. |
 
+**Language** — display language of prompts and info messages
+| Key | Default | Description |
+| :--- | :--- | :--- |
+| `ezimage.language` | `auto` | Display language for EzImage prompts, errors, and info messages. `auto` follows VS Code's display language. Settings panel labels themselves always follow VS Code (not this setting). |
+
 ### Insert format templates
 
 Three built-in presets cover the most common shapes:
 
-| Format | Output |
-| :--- | :--- |
-| `markdown` | `![photo](https://pub.example.com/2026/09/photo-abc123.webp)` |
-| `html-center` | `<div align="center"><img src="https://pub.example.com/2026/09/photo-abc123.webp" alt="photo" width="65%"></div>` |
-| `html-figure` | `<figure><img src="https://pub.example.com/2026/09/photo-abc123.webp" alt="photo" width="65%"><figcaption>photo</figcaption></figure>` |
+| Format | With `insertAlign = center`, `insertWidth = 100%` | `insertAlign = none` |
+| :--- | :--- | :--- |
+| `markdown` | `![photo](https://pub.example.com/2026/09/photo-abc123.webp)` | *(same)* |
+| `html-wrap` | `<div align="center"><img src="…" alt="photo" width="100%"></div>` | `<img src="…" alt="photo" width="100%">` (no wrapper) |
+| `html-figure` | `<figure><img src="…" alt="photo" width="100%"><figcaption>photo</figcaption></figure>` | *(same — figure ignores `insertAlign`)* |
 
 For full control, set `ezimage.insertFormat = custom` and define `ezimage.insertCustomTemplate` with any combination of variables:
 

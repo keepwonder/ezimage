@@ -92,6 +92,9 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 
 ### 全部配置项
 
+按 VS Code 设置面板的展示顺序排列，每个分组对应一组语义相关的设置。`order` 字段显式定义在 `package.json` 里，避免 VS Code 按字母序排序把组打乱。
+
+**Storage** — 上传目标
 | 配置键 | 默认值 | 说明 |
 | :--- | :--- | :--- |
 | `ezimage.provider` | `r2` | 存储 Provider。当前仅 `r2` 已实现；S3/OSS/COS 在 Roadmap 中。 |
@@ -101,26 +104,39 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 | `ezimage.r2.bucketName` | `""` | R2 存储桶名称。 |
 | `ezimage.r2.publicUrl` | `""` | 公开分发地址，例如 `https://pub-xxxx.r2.dev`。 |
 | `ezimage.pathTemplate` | `{yyyy}/{MM}/{timestamp}-{random}.{ext}` | 对象路径模板。可用变量：`{yyyy}` `{MM}` `{dd}` `{hh}` `{mm}` `{ss}` `{timestamp}` `{random}` `{name}` `{ext}`。 |
+
+**Compression** — 上传前对图片的处理
+| 配置键 | 默认值 | 说明 |
+| :--- | :--- | :--- |
 | `ezimage.compress` | `true` | 是否在上传前压缩为 WebP。 |
 | `ezimage.maxWidth` | `1920` | 最大宽度（像素），超过此值会先等比缩放再压缩。设为 `0` 表示保持原图尺寸。 |
 | `ezimage.quality` | `85` | WebP 质量（1–100），数值越高画质越好、体积越大。 |
 | `ezimage.autoInstallSharp` | `true` | 当 `sharp` 缺失时，首次上传会引导一键安装。需要 Node.js ≥ 18.17 且 `npm` 在 `PATH` 上。 |
 | `ezimage.disableCompressionNotice` | `false` | 当 sharp 加载失败时是否静默（默认会提示一次）。 |
-| `ezimage.insertFormat` | `markdown` | 插入到编辑器的片段格式。`markdown` / `html-center` / `html-figure` / `custom`。详见 [插入格式模板](#插入格式模板)。 |
+
+**Insert format** — 片段在 Markdown 里的样子
+| 配置键 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `ezimage.insertFormat` | `markdown` | 插入到编辑器的片段格式。`markdown` / `html-wrap` / `html-figure` / `custom`。详见 [插入格式模板](#插入格式模板)。 |
 | `ezimage.insertWidth` | `100%` | HTML 模板里 `{width}` 渲染的值。例如 `65%`、`600px`、`auto`。空字符串表示不输出 width 属性。 |
 | `ezimage.insertAlign` | `none` | HTML 模板的对齐方式。`none` 不包 `<div>` 包裹层。 |
 | `ezimage.insertCustomTemplate` | `""` | `insertFormat = custom` 时使用的模板字符串。可用变量：`{url}` `{filename}` `{name}` `{ext}` `{width}` `{align}` `{alt}`。 |
 | `ezimage.insertIncludeName` | `true` | 是否用源文件名作为 alt 文本 / figcaption。 |
 
+**Language** — 弹窗、错误、提示信息的语言
+| 配置键 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `ezimage.language` | `auto` | EzImage 弹窗、错误、提示信息的显示语言。`auto` 跟随 VS Code 的界面语言。设置面板的 label 仍跟随 VS Code 主语言（这是 VS Code 的限制）。 |
+
 ### 插入格式模板
 
-三个内置预设覆盖最常见场景：
+三个内置预设覆盖最常见场景。`insertAlign` 和 `insertWidth` 是独立设置——`insertAlign = none` 时 `html-wrap` 直接输出 `<img>`，不加 `<div>` 包裹：
 
-| 格式 | 输出示例 |
-| :--- | :--- |
-| `markdown` | `![photo](https://pub.example.com/2026/09/photo-abc123.webp)` |
-| `html-center` | `<div align="center"><img src="..." alt="photo" width="65%"></div>` |
-| `html-figure` | `<figure><img src="..." alt="photo" width="65%"><figcaption>photo</figcaption></figure>` |
+| 格式 | `align = center`、`width = 100%` | `align = none` |
+| :--- | :--- | :--- |
+| `markdown` | `![photo](https://pub.example.com/2026/09/photo-abc123.webp)` | *(相同)* |
+| `html-wrap` | `<div align="center"><img src="…" alt="photo" width="100%"></div>` | `<img src="…" alt="photo" width="100%">`（无包裹） |
+| `html-figure` | `<figure><img src="…" alt="photo" width="100%"><figcaption>photo</figcaption></figure>` | *(相同 — figure 忽略 `insertAlign`)* |
 
 想要完全自定义？把 `ezimage.insertFormat` 设为 `custom`，再在 `ezimage.insertCustomTemplate` 里写自己的模板，变量如下：
 
