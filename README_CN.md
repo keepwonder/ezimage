@@ -106,6 +106,65 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 - [ ] Gitee/GitHub 图床模式
 - [ ] 图片上传历史记录统计预览
 
+## <span id="development"></span>🛠️ 开发指南
+
+### 从源码构建
+
+```bash
+npm install            # 安装依赖
+npm run compile        # 编译 TypeScript 到 ./out/
+npm run verify         # 打 dev VSIX + 跑 smoke test
+npm run package        # 同 verify，但保留 .vsix 在项目根
+npm run vsce:package   # 用官方 @vscode/vsce 打包
+```
+
+### Commit 消息规范
+
+本项目遵循 [Conventional Commits](https://www.conventionalcommits.org/)，
+由 [`standard-version`](https://github.com/conventional-changelog/standard-version)
+自动生成 CHANGELOG 并选择下一个版本号：
+
+| 类型 | 触发版本号变更 | CHANGELOG 分类 |
+| :--- | :--- | :--- |
+| `feat:` | minor | ✨ Features |
+| `fix:` | patch | 🐛 Bug Fixes |
+| `perf:` | patch | ⚡ Performance |
+| `refactor:` | — | ♻️ Refactors |
+| `docs:` | — | 📚 Documentation |
+| `build:` | — | 📦 Build System |
+| `ci:` | — | 🔧 Continuous Integration |
+| `chore:` / `style:` | — | 不显示 |
+
+破坏性变更：在类型后加 `!`，例如 `feat!: 重写上传管线`，会触发 major 版本号变更。
+
+### 发布流程
+
+```bash
+# 1. 确认自上次发布以来的 commit 都符合 conventional 规范
+git log v1.0.3..HEAD --oneline
+
+# 2. 运行发布脚本 — 自动 bump package.json、重生 CHANGELOG.md、
+#    并创建单个 chore(release): X.Y.Z commit。先不打 tag，方便你 review 改动。
+./scripts/release.sh patch      # 也可以是 minor / major
+
+# 3. 检视改动后推送 commit，然后打 tag 并推送 tag
+git push
+git tag v1.0.4
+git push origin v1.0.4
+
+# 4. GitHub Actions release workflow 会自动：
+#    - 用官方 @vscode/vsce 打包 VSIX
+#    - 跑 smoke test（验证 AWS SDK 能正常 require）
+#    - 从 CHANGELOG.md 提取 release notes
+#    - 把 .vsix 附加到 GitHub Release
+```
+
+仅预览不修改：
+
+```bash
+./scripts/release.sh --dry
+```
+
 ## <span id="feedback"></span>🤝 贡献与反馈
 
 如果您在使用过程中遇到任何问题，或者有功能建议，欢迎：

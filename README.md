@@ -101,6 +101,67 @@ After installation, follow these steps to configure:
 - [ ] Gitee/GitHub image hosting mode
 - [ ] Upload history and statistics preview
 
+## <span id="development"></span>🛠️ Development
+
+### Building from source
+
+```bash
+npm install            # install dependencies
+npm run compile        # compile TypeScript to ./out/
+npm run verify         # package a dev VSIX + run smoke tests
+npm run package        # same as verify but keeps the .vsix on disk
+npm run vsce:package   # package using the official @vscode/vsce
+```
+
+### Commit message conventions
+
+This project follows [Conventional Commits](https://www.conventionalcommits.org/) so that
+[`standard-version`](https://github.com/conventional-changelog/standard-version) can
+auto-generate the changelog and pick the next version number:
+
+| Type | Triggers version bump | Section in CHANGELOG |
+| :--- | :--- | :--- |
+| `feat:` | minor | ✨ Features |
+| `fix:` | patch | 🐛 Bug Fixes |
+| `perf:` | patch | ⚡ Performance |
+| `refactor:` | — | ♻️ Refactors |
+| `docs:` | — | 📚 Documentation |
+| `build:` | — | 📦 Build System |
+| `ci:` | — | 🔧 Continuous Integration |
+| `chore:` / `style:` | — | hidden |
+
+Breaking changes: append `!` after the type, e.g. `feat!: rewrite upload pipeline`. This
+will bump the major version.
+
+### Release process
+
+```bash
+# 1. Make sure conventional commits are in place since the last release
+git log v1.0.3..HEAD --oneline
+
+# 2. Run the release script — this bumps package.json, regenerates CHANGELOG.md,
+#    and creates a single chore(release): X.Y.Z commit. Tag is NOT created yet
+#    so you can review the diff first.
+./scripts/release.sh patch      # or minor / major
+
+# 3. Inspect the changes, push the commit, then tag and push the tag
+git push
+git tag v1.0.4
+git push origin v1.0.4
+
+# 4. The GitHub Actions release workflow automatically:
+#    - packages the VSIX with the official @vscode/vsce
+#    - smoke-tests it (AWS SDK must require correctly)
+#    - extracts release notes from CHANGELOG.md
+#    - attaches the .vsix to a GitHub Release
+```
+
+A dry run is available without modifying anything:
+
+```bash
+./scripts/release.sh --dry
+```
+
 ## <span id="feedback"></span>🤝 Contribution & Feedback
 
 If you encounter any issues or have feature suggestions, please:
