@@ -3,6 +3,12 @@
 All notable changes to EzImage are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 本文件记录 EzImage 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-cn/1.1.0/) ，本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
+### [1.1.1](https://github.com/keepwonder/ezimage/compare/v1.1.0...v1.1.1) (2026-09-10)
+
+
+### 🐛 Bug Fixes / 问题修复
+
+* **drop,sharp:** rewrite drag-and-drop flow + cancel upload when sharp installs ([2f9bbcb](https://github.com/keepwonder/ezimage/commit/2f9bbcbcdb4ea8a54d3703bf076c86bebf866d14))
 
 ## [1.1.0](https://github.com/keepwonder/ezimage/compare/v1.0.4...v1.1.0) (2026-09-10)
 
