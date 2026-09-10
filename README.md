@@ -206,6 +206,39 @@ The confirmation dialog tells you how many were skipped so nothing is silently d
 | `ezimage.localImageUpload.enabled` | `false` | Show "EzImage: Convert Local Image Paths to URLs" in the editor context menu. Off by default — opt in once and forget about it. |
 | `ezimage.localImageUpload.skipNonExistent` | `true` | Skip images whose local file is missing (deleted). Set `false` to surface them as hard errors instead. |
 
+## <span id="drop-upload"></span>🖱 Drag-and-Drop Upload
+
+Opt-in: takes over drag-and-drop for image files in Markdown editors. When enabled, dropping one or more images into a `.md` file uploads them to the cloud and inserts the URLs in place of the local paths.
+
+> ⚠️ **You must hold `Shift` while dragging.** VS Code's built-in editor-drop behaviour requires `Shift` — without it the file opens in a new tab. This is a VS Code design choice, not something EzImage controls. The status bar shows a *Hold Shift to drop into editor* hint while you drag.
+
+### Quick start
+
+1. **Settings** (`Cmd+,` / `Ctrl+,`) → search for `EzImage`.
+2. Enable **`ezimage.dropUpload.enabled`**.
+3. In a Markdown file, **hold `Shift`**, drag one or more images from Finder / Explorer into the editor.
+4. Confirm with **Upload**.
+5. Each image first appears as `![uploading…](local-path)`, then morphs into `![filename](https://your-bucket/...)` once the upload completes.
+6. A toast summarises: `EzImage: drop complete — 3 uploaded, 0 failed. · saved 1.4 MB.`
+
+### What gets uploaded
+
+- ✅ Pure image drops: one or more `*.png / *.jpg / *.gif / *.webp / *.svg`.
+- ❌ Mixed drops (e.g. `foo.png + notes.txt`): EzImage backs off entirely and lets VS Code handle the drop natively. We never silently swallow a non-image file the user dropped alongside images.
+- ❌ Non-Markdown files: EzImage's drop handler doesn't activate, so other languages keep their native drop semantics.
+
+### Settings
+
+| Setting | Default | What it does |
+| :--- | :--- | :--- |
+| `ezimage.dropUpload.enabled` | `false` | Take over drag-and-drop for image drops in Markdown editors. **Off by default** so your existing drop behaviour is unchanged until you opt in. |
+| `ezimage.dropUpload.requireConfirm` | `true` | Pop a confirmation dialog before uploading. Disable to skip the prompt and upload immediately (faster, but a misclick triggers a network call). |
+| `ezimage.dropUpload.placeholder` | `uploading…` | Alt text shown while the upload is in flight. If the upload fails, the placeholder is left as a still-valid (local-path) Markdown link rather than erased. |
+
+### FAQ: why does it still open the file in a new tab?
+
+This is VS Code's safety mechanism, not an EzImage bug. VS Code only treats a drag as "drop into the editor" when you hold `Shift`; without `Shift` it interprets the gesture as "open this file in a new editor tab" and calls its built-in file opener — completely bypassing every `DocumentDropEditProvider`, ours included. There is no extension-level setting that disables this behaviour; the only control surface is upstream in VS Code itself. The fix is just muscle memory: **drag + `Shift`**.
+
 ## <span id="hotkeys"></span>⌨️ Hotkeys
 
 | Action | Mac Hotkey | Windows/Linux Hotkey |

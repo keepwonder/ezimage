@@ -187,14 +187,32 @@
         "ezimage.localImageUpload.enabled": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Show **EzImage: Convert Local Image Paths to URLs** in the editor context menu. Disabled by default — opt in per workspace or globally. See the [README](https://github.com/keepwonder/ezimage#local-images-to-cloud-urls) for details.",
+          "markdownDescription": "Show **EzImage: Convert Local Image Paths to URLs** in the editor context menu. Disabled by default — opt in per workspace or globally. The two settings below (`skipNonExistent`) only take effect when this is enabled. See the [README](https://github.com/keepwonder/ezimage#local-images-to-cloud-urls) for details.",
           "order": 70
         },
         "ezimage.localImageUpload.skipNonExistent": {
           "type": "boolean",
           "default": true,
-          "description": "Silently skip images whose file does not exist on disk (e.g. deleted from disk). Disable to surface them as errors instead.",
+          "markdownDescription": "> ⚠️ Only takes effect when **EzImage › Local Image Upload: Enabled** is `true`.\n\nSilently skip images whose file does not exist on disk (e.g. deleted from disk). Disable to surface them as errors instead.",
           "order": 71
+        },
+        "ezimage.dropUpload.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Take over drag-and-drop for image files in Markdown editors. The two settings below (`requireConfirm`, `placeholder`) only take effect when this is enabled.\n\nWhen on, dropping one or more images into a `.md` file uploads them to the cloud and inserts the URLs in place of the local path. When **off**, drops keep VS Code's native behaviour (the image opens in a new editor tab). Non-image files are always left to the native handler — EzImage will only intercept a drop when **every** dropped file is a supported image.\n\n**Note:** VS Code requires you to **hold `Shift` while dragging** for the drop to land in the editor. Without `Shift` the file opens in a new tab (VS Code's built-in behaviour, not something EzImage controls).",
+          "order": 80
+        },
+        "ezimage.dropUpload.requireConfirm": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "> ⚠️ Only takes effect when **EzImage › Drop Upload: Enabled** is `true`.\n\nPop a confirmation dialog before uploading on drag-and-drop. Disable to skip the prompt and upload immediately (faster, but a misclick triggers a network call).",
+          "order": 81
+        },
+        "ezimage.dropUpload.placeholder": {
+          "type": "string",
+          "default": "uploading…",
+          "markdownDescription": "> ⚠️ Only takes effect when **EzImage › Drop Upload: Enabled** is `true`.\n\nAlt text shown in the placeholder Markdown while an image is being uploaded. The replacement with the real URL happens automatically once the upload completes; if the upload fails, the placeholder is left as a still-valid (local-path) Markdown link rather than erased.",
+          "order": 82
         },
         "ezimage.language": {
           "type": "string",

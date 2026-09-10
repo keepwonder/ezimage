@@ -205,6 +205,39 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 | `ezimage.localImageUpload.enabled` | `false` | 在编辑器右键菜单里显示「EzImage: 把本地图片路径转成云端 URL」。默认关闭——开一次就行。 |
 | `ezimage.localImageUpload.skipNonExistent` | `true` | 跳过本地文件不存在的图片（通常是因为已被删除）。设为 `false` 时把它们当成错误处理。 |
 
+## <span id="drop-upload"></span>🖱 拖拽上传
+
+可选功能：接管 Markdown 编辑器里的图片拖拽。开启后，把图片拖入 `.md` 文件会上传到云端，并在原地把本地路径替换成云端 URL。
+
+> ⚠️ **必须按住 `Shift` 才能拖进编辑器。** 这是 VS Code 的内置设计——不按 Shift 时 VS Code 会把拖拽当作"在新标签页打开文件"，完全绕开所有 `DocumentDropEditProvider`（包括我们的）。拖拽时状态栏会显示「按住 Shift 以放入编辑器」的提示。EzImage 无法在 extension 层面关闭这个限制。
+
+### 快速上手
+
+1. 打开 `Settings`（`Cmd+,` / `Ctrl+,`）→ 搜索 `EzImage`。
+2. 启用 **`ezimage.dropUpload.enabled`**。
+3. 在 Markdown 文件里，**按住 `Shift`**，把 Finder / 资源管理器里的图片拖进编辑器。
+4. 弹出确认框，点击「上传」。
+5. 每张图片先以 `![uploading…](本地路径)` 出现，上传完成后渐变成 `![文件名](https://你的桶/...)`。
+6. 完成后弹出通知：`EzImage：拖拽完成——成功 3 张，失败 0 张。· 共节省 1.4 MB。`
+
+### 上传范围
+
+- ✅ 纯图片拖拽：`*.png / *.jpg / *.gif / *.webp / *.svg`。
+- ❌ 混合拖拽（如 `foo.png + notes.txt`）：EzImage 整体放弃接管，让 VS Code 走原生处理——绝不静默吞掉非图片文件。
+- ❌ 非 Markdown 文件：drop handler 不激活，保留原生语义。
+
+### 配置项
+
+| 配置 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `ezimage.dropUpload.enabled` | `false` | 接管 Markdown 编辑器里的图片拖拽。**默认关闭**，opt-in 后才改变你的拖拽行为。 |
+| `ezimage.dropUpload.requireConfirm` | `true` | 上传前弹确认框。设为 `false` 跳过弹框立刻上传（更快，但误触会发请求）。 |
+| `ezimage.dropUpload.placeholder` | `uploading…` | 上传过程中占位符的 alt 文本。上传失败时占位符保留为合法的本地路径链接，不会被清空。 |
+
+### 常见问题：为什么还要按 Shift 还会"在新标签页打开"？
+
+这是 VS Code 的安全机制，不是 EzImage 的 bug。VS Code 只在按住 `Shift` 时才把拖拽当作"放入编辑器"；不按 `Shift` 时它会当成"在新编辑器里打开这个文件"，直接走内置文件 opener，完全绕过所有 `DocumentDropEditProvider`——包括我们的。Extension 层面没有关闭这个行为的开关，控制权在 VS Code 上游。养成习惯：**拖 + `Shift`**。
+
 ## <span id="hotkeys"></span>⌨️ 快捷键
 
 | 功能 | Mac 快捷键 | Windows/Linux 快捷键 |

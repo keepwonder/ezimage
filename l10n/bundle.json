@@ -61,6 +61,8 @@
   "sharp.notInstalled.abiMismatch.dismiss": "Don't ask again",
   "sharp.reloadAfterInstall.title": "EzImage: sharp installed successfully. Reload the window to activate it.",
   "sharp.reloadAfterInstall.action": "Reload window",
+  "sharp.uploadCancelledPendingReload": "EzImage: upload of {0} cancelled — sharp was just installed. Reload the window, then try again to get the compressed version.",
+  "sharp.uploadCancelledPendingReloadBatch": "EzImage: batch cancelled ({0} images) — sharp was just installed. Reload the window, then run the command again to upload compressed versions.",
   "log.compressionReady": "Compression engine ready (sharp {0}).",
   "log.compressionUnavailable": "Compression engine unavailable: {0}",
   "log.compressionWillFallback": "EzImage will fall back to uploading the original image until sharp is installed.",
@@ -99,5 +101,15 @@
   "log.localUploadNothingToDo": "Local-image conversion: 0 processable, {0} skipped ({1} total found).",
   "log.localUploadItemFailed": "Local-image upload failed for {0}: {1}",
   "log.localUploadEditFailed": "Local-image conversion: WorkspaceEdit.applyEdit returned false.",
-  "log.localUploadDone": "Local-image conversion: {0} uploaded, {1} failed."
+  "log.localUploadDone": "Local-image conversion: {0} uploaded, {1} failed.",
+  "drop.confirm": "Upload {0} image(s) via EzImage?",
+  "drop.confirm.action": "Upload",
+  "drop.cancel": "Cancel",
+  "drop.summary": "EzImage: drop complete — {0} uploaded, {1} failed.",
+  "log.dropScanStart": "Drop: scanning document (placeholder len {0}, doc len {1}).",
+  "log.dropPlaceholderMissing": "Drop: placeholder text not found in document at offsets {0}-{1} (doc len {2}).\nExpected: {4}\nGot:      {3}\nReplacements aborted.",
+  "log.dropTokenMissing": "Drop: placeholder for image {0} ({1}) not found in document — skipped.",
+  "log.dropItemFailed": "Drop upload failed for {0}: {1}",
+  "log.dropEditFailed": "Drop replacement: WorkspaceEdit.applyEdit returned false.",
+  "log.uploadCancelledPendingReload": "Upload cancelled pending sharp reload: {0}."
 }

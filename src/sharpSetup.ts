@@ -119,35 +119,59 @@ export function isSharpPresentOnDisk(extensionPath: string): boolean {
  * "Upload Local Images" command silently skipped compression whenever
  * sharp was missing — the user got no install prompt at all.
  *
- * Returns true when sharp is ready (or compression is disabled), false
- * when compression will be skipped this call. The function itself
- * manages the install prompt and the "don't ask again" suppression
- * state — callers only need to log if it returns false.
+ * The return value tells the caller how to proceed:
+ *
+ *   - 'ready'                    → compress normally.
+ *   - 'skip-original'            → user explicitly accepted an
+ *                                  original-quality upload (chose
+ *                                  Skip / Don't ask again, or the
+ *                                  install attempt failed). Upload
+ *                                  the original.
+ *   - 'install-restart-required' → the user chose Install and it
+ *                                  SUCCEEDED. sharp cannot load until
+ *                                  the window reloads, so the caller
+ *                                  should CANCEL this upload instead
+ *                                  of silently shipping the original
+ *                                  — the user asked for compression,
+ *                                  and a reload will give it to them.
+ *                                  (A reload prompt is already shown
+ *                                  by the install flow.)
  */
-export async function ensureSharpReady(compressionEnabled: boolean): Promise<boolean> {
-    if (!compressionEnabled) return true;
-    if (loadSharp()) return true;
+export type SharpReadiness =
+    | 'ready'
+    | 'skip-original'
+    | 'install-restart-required';
 
-    if (!getAutoInstallSharpEnabled()) return false;
+export async function ensureSharpReady(compressionEnabled: boolean): Promise<SharpReadiness> {
+    if (!compressionEnabled) return 'ready';
+    if (loadSharp()) return 'ready';
+
+    if (!getAutoInstallSharpEnabled()) return 'skip-original';
 
     const ext = vscode.extensions.getExtension('kiang.ezimage');
     const extensionPath = ext?.extensionPath || path.dirname(__dirname);
     const onDisk = isSharpPresentOnDisk(extensionPath);
 
     if (!onDisk) {
-        await promptFreshInstall(extensionPath);
-    } else if (!getCompressionNoticeDisabled()) {
+        return await promptFreshInstall(extensionPath);
+    }
+
+    if (!getCompressionNoticeDisabled()) {
         await promptAbiMismatch();
     }
-    return false;
+    return 'skip-original';
 }
 
 /**
  * sharp is missing entirely. Offer Install / Skip / Don't ask again.
  * If the user picks Install we run `installSharp` and prompt for a
  * window reload (VS Code can't unload a native module without a reload).
+ *
+ * Returns the readiness outcome so the caller can cancel the in-flight
+ * upload when the user opted into installing — shipping the original in
+ * that case would defeat the point of installing.
  */
-async function promptFreshInstall(extensionPath: string): Promise<void> {
+async function promptFreshInstall(extensionPath: string): Promise<SharpReadiness> {
     const installLabel = t('sharp.notInstalled.install');
     const skipLabel = t('sharp.notInstalled.skip');
     const dismissLabel = t('sharp.notInstalled.dismiss');
@@ -172,12 +196,21 @@ async function promptFreshInstall(extensionPath: string): Promise<void> {
                     vscode.commands.executeCommand('workbench.action.reloadWindow');
                 }
             });
-        } else {
-            vscode.window.showErrorMessage(t('sharp.installFailed.title'));
+            // Install succeeded but sharp can't load until reload —
+            // caller should cancel this upload.
+            return 'install-restart-required';
         }
-    } else if (choice === dismissLabel) {
+        // Install failed: tell the user, then fall back to uploading
+        // the original so their paste isn't lost.
+        vscode.window.showErrorMessage(t('sharp.installFailed.title'));
+        return 'skip-original';
+    }
+    if (choice === dismissLabel) {
         await vscode.workspace.getConfiguration('ezimage').update('autoInstallSharp', false, vscode.ConfigurationTarget.Global);
     }
+    // Skip (upload original) or Don't ask again — explicit consent to
+    // proceed without compression.
+    return 'skip-original';
 }
 
 /**

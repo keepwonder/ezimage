@@ -59,6 +59,8 @@
   "sharp.notInstalled.abiMismatch.dismiss": "不再提示",
   "sharp.reloadAfterInstall.title": "EzImage: sharp 安装成功。请重启窗口以激活它。",
   "sharp.reloadAfterInstall.action": "重启窗口",
+  "sharp.uploadCancelledPendingReload": "EzImage：已取消 {0} 的上传——sharp 刚刚安装。重启窗口后重新上传，即可获得压缩版本。",
+  "sharp.uploadCancelledPendingReloadBatch": "EzImage：已取消本次批量任务（{0} 张）——sharp 刚刚安装。重启窗口后重新执行，即可上传压缩版本。",
   "log.compressionReady": "智能压缩引擎就绪 (sharp {0})。",
   "log.compressionUnavailable": "智能压缩引擎不可用：{0}",
   "log.compressionWillFallback": "EzImage 在 sharp 安装前会回退到上传原图。",
@@ -97,5 +99,15 @@
   "log.localUploadNothingToDo": "本地图片转换：可处理 0 张，跳过 {0} 张（共找到 {1} 处）。",
   "log.localUploadItemFailed": "本地图片上传失败 {0}：{1}",
   "log.localUploadEditFailed": "本地图片转换：WorkspaceEdit.applyEdit 返回 false。",
-  "log.localUploadDone": "本地图片转换完成：成功 {0} 张，失败 {1} 张。"
+  "log.localUploadDone": "本地图片转换完成：成功 {0} 张，失败 {1} 张。",
+  "drop.confirm": "EzImage：上传 {0} 张图片？",
+  "drop.confirm.action": "上传",
+  "drop.cancel": "取消",
+  "drop.summary": "EzImage：拖拽完成——成功 {0} 张，失败 {1} 张。",
+  "log.dropScanStart": "拖拽：开始扫描文档（占位符长度 {0}，文档长度 {1}）。",
+  "log.dropPlaceholderMissing": "拖拽：在文档偏移 {0}-{1} 处找不到占位符文本（文档长度 {2}）。\n期望：{4}\n实际：{3}\n替换流程中止。",
+  "log.dropTokenMissing": "拖拽：找不到第 {0} 张图（{1}）的占位符——跳过。",
+  "log.dropItemFailed": "拖拽上传失败 {0}：{1}",
+  "log.dropEditFailed": "拖拽替换：WorkspaceEdit.applyEdit 返回 false。",
+  "log.uploadCancelledPendingReload": "已取消上传，等待 sharp 重启生效：{0}。"
 }

@@ -8,6 +8,7 @@ import { renderInsert } from './insertTemplate';
 import { t, configureI18n } from './i18n';
 import { log, initLogger, getOutputChannel } from './logger';
 import { ensureSharpReady, probeSharp, loadSharp } from './sharpSetup';
+import { EzImageDropProvider } from './dropProvider';
 
 function generateRandom(length: number = 8): string {
   return Math.random().toString(36).substring(2, 2 + length);
@@ -39,7 +40,7 @@ function generateFilePath(originalName: string, template: string): string {
   return result;
 }
 
-function getSettings(): EzImageSettings {
+export function getSettings(): EzImageSettings {
   const config = vscode.workspace.getConfiguration('ezimage');
   return {
     provider: config.get<'r2'>('provider') || 'r2',
@@ -242,7 +243,14 @@ export interface UploadOneResult {
   compression?: UploadOneCompressionInfo;
 }
 
-async function uploadOne(options: {
+/**
+ * Core upload primitive. Used by `uploadAndInsert` (clipboard/file
+ * picker flows) and `runLocalImageUpload` (batch local-path
+ * conversion), and now also by `dropProvider.ts` (drag-and-drop into
+ * a Markdown editor). Exported so the drop provider can call it
+ * directly without going through the editor-insertion layer.
+ */
+export async function uploadOne(options: {
   filePath: string;
   isTemp?: boolean;
   /** Used only for progress notification text. */
@@ -266,11 +274,25 @@ async function uploadOne(options: {
     try { return fs.statSync(filePath).size; } catch { return 0; }
   })();
 
-  // Centralised "is sharp usable?" gate. When the user has already
-  // dismissed the install prompt this returns false and we fall through
-  // to the existing "sharp missing" log inside compressImage().
+  // Centralised "is sharp usable?" gate.
+  //
+  //  - 'ready' / 'skip-original' → proceed with the upload (compressed
+  //    or original respectively — compressImage() handles the fallback
+  //    when sharp is missing).
+  //  - 'install-restart-required' → the user just installed sharp and
+  //    must reload the window before it can load. Cancel this upload
+  //    instead of silently shipping the original: they asked for the
+  //    compressed version, and after a reload they can simply retry
+  //    and get it.
   if (ensureSharp) {
-    await ensureSharpReady(settings.compress);
+    const readiness = await ensureSharpReady(settings.compress);
+    if (readiness === 'install-restart-required') {
+      log(t('log.uploadCancelledPendingReload', originalName), 'info');
+      vscode.window.showInformationMessage(
+        t('sharp.uploadCancelledPendingReload', originalName),
+      );
+      return null;
+    }
   }
 
   let processedPath = filePath;
@@ -398,7 +420,13 @@ async function saveClipboardImage(): Promise<string | null> {
   return null;
 }
 
-function isImageFile(filePath: string): boolean {
+/**
+ * Whether a file path looks like a supported image. Exported so other
+ * modules (notably `dropProvider.ts`) can share the same whitelist
+ * definition. The list is the single source of truth for "things
+ * EzImage knows how to handle".
+ */
+export function isImageFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();
   return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext);
 }
@@ -503,34 +531,6 @@ async function getClipboardImageFilePath(): Promise<ClipboardFileResult> {
   }
 
   return { filePath: null, containsFileReference: false };
-}
-
-class EzImageDropProvider implements vscode.DocumentDropEditProvider {
-  async provideDocumentDropEdits(document: vscode.TextDocument, position: vscode.Position, dataTransfer: vscode.DataTransfer): Promise<vscode.DocumentDropEdit | undefined> {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor || document.languageId !== 'markdown') return undefined;
-
-    const fileItem = dataTransfer.get('text/uri-list');
-    if (!fileItem) return undefined;
-
-    const uriList = await fileItem.value;
-    if (typeof uriList !== 'string') return undefined;
-
-    const uris = uriList.split('\r\n').filter(uri => uri.trim().length > 0)
-      .map(u => vscode.Uri.parse(u))
-      .filter(uri => isImageFile(uri.fsPath));
-
-    if (uris.length === 0) return undefined;
-
-    const choice = await vscode.window.showInformationMessage(`Upload ${uris.length} image(s) via EzImage?`, 'Upload', 'Cancel');
-    if (choice !== 'Upload') return undefined;
-
-    for (const uri of uris) {
-      await uploadAndInsert(uri.fsPath, editor);
-    }
-
-    return new vscode.DocumentDropEdit('');
-  }
 }
 
 /**
@@ -659,7 +659,19 @@ async function runLocalImageUpload(scope: 'document' | 'selection'): Promise<voi
   // Single install prompt for the whole batch. Without this gate the
   // user would get an installSharp dialog once per image when sharp is
   // missing — annoying even if "Don't ask again" is honoured.
-  await ensureSharpReady(settings.compress);
+  //
+  // If they choose Install (and it succeeds), abort the whole batch:
+  // sharp can't load until reload, and silently uploading N originals
+  // would defeat the point of installing. After reload they can rerun
+  // the command and get compressed uploads.
+  const readiness = await ensureSharpReady(settings.compress);
+  if (readiness === 'install-restart-required') {
+    log(t('log.uploadCancelledPendingReload', `batch of ${processable.length}`), 'info');
+    vscode.window.showInformationMessage(
+      t('sharp.uploadCancelledPendingReloadBatch', String(processable.length)),
+    );
+    return;
+  }
 
   const replacements: Replacement[] = [];
   let succeeded = 0;
