@@ -3,6 +3,18 @@
 All notable changes to EzImage are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 本文件记录 EzImage 的所有重要变更。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-cn/1.1.0/) ，本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/spec/v2.0.0.html)。
+## [1.1.0](https://github.com/keepwonder/ezimage/compare/v1.0.4...v1.1.0) (2026-09-10)
+
+
+### ✨ Features / 新功能
+
+* **local-upload:** convert local image paths to cloud URLs in Markdown ([b7f00ca](https://github.com/keepwonder/ezimage/commit/b7f00ca32ef3453482f2f7db5932c224e8870f7e))
+
+
+### 📚 Documentation / 文档
+
+* **readme:** document local-image conversion + rename commands ([6e26f07](https://github.com/keepwonder/ezimage/commit/6e26f0761e607c2c4331dd44b325cac58d182b81))
+* **readme:** sync version badge to 1.0.4 + use GitHub release API ([785ef09](https://github.com/keepwonder/ezimage/commit/785ef0931e2b96889acb4184fbc31b36b291ecff))
 
 ## [1.0.4] - 2026-09-09
 
