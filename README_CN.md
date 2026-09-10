@@ -39,6 +39,7 @@
 -   **📸 极致贴图体验**:
     *   **剪贴板上传**: `Cmd+Alt+V` (Mac) 或 `Ctrl+Alt+V` (Win/Linux) 瞬间完成上传并插入。
     *   **丝滑拖拽**: 直接从系统文件夹拖入图片，自动处理并生成链接。
+-   **🔄 本地图片一键上云**: 在 Markdown 编辑器中右键 → **EzImage: 把本地图片路径转成云端 URL**，扫描当前文档里的 `![alt](./本地.png)`，批量上传到云端并原地替换路径——整个过程是**一次原子编辑**，按一次 `Cmd+Z` 即可整体撤销。
 -   **📉 智能图片引擎**: 内置 `sharp` 工业级处理引擎。
     *   自动转换为 **WebP** 格式，极致压缩体积且保持画质。
     *   支持自动尺寸调整（Max Width）和质量控制。
@@ -82,7 +83,7 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 安装完成后，建议进行如下基础操作：
 
 1. 按 `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win) 唤起命令面板。
-2. 搜索并运行 **`EzImage: Configure Settings`**。
+2. 搜索并运行 **`EzImage: 打开设置`**。
 3. 配置您的存储服务（以 Cloudflare R2 为例）：
    - **Provider**: `r2`
    - **Account ID**: 您的 API 令牌关联账户 ID
@@ -159,12 +160,57 @@ EzImage 不仅支持标准的 **VS Code**，还完美适配目前主流的 AI �
 >
 > **想要自定义图片路径？** 请参考 [📝 路径变量手册](docs/VARIABLES_CN.md)。
 
+## <span id="local-images"></span>🔄 本地图片一键上云
+
+本地写稿、准备发布时，不用再一张张手动上传。EzImage 可以扫描 Markdown 文档，把所有本地图片引用上传到云端，并把路径原地替换成云端 URL——一次性搞定。
+
+### 快速开始
+
+1. 打开 `Settings`（`Cmd+,` / `Ctrl+,`），搜索 `EzImage`。
+2. 启用 **`ezimage.localImageUpload.enabled`**。启用后，编辑器右键菜单的 **Modification** 分组里会多出两项：
+    - **EzImage: 把本地图片路径转成云端 URL**：扫描整个文档。
+    - **EzImage: 把选中区域里的本地图片转成云端 URL**：只扫描当前选中的部分（仅在有选中时出现）。
+3. 右键 Markdown 文件任意位置 → **EzImage: 把本地图片路径转成云端 URL**。
+4. EzImage 找到所有 `![alt](./path.png)`，弹出确认：*"找到 5 张本地图片（2 张已跳过）。是否上传并就地替换？"* 然后串行上传，顶部进度条提示进度。
+5. 整个转换作为**一次原子编辑**落地，按一次 `Cmd+Z` 就能整体回滚。
+
+### 扫描范围
+
+- ✅ Markdown 行内图片：`![alt](./relative.png)`、`![alt](/绝对路径.jpg)`、`![alt](<./带空格.webp>)`、`![alt](./x.png "title")`。
+- ✅ 相对路径（基于 Markdown 文件所在目录解析）和绝对路径。
+- ✅ 同一图片被多次引用：每处独立处理（因为 `ezimage.pathTemplate` 会随机化云端 key，所以可能产生多个云端 URL）。
+
+### 跳过规则
+
+| 跳过原因 | 示例 | 行为 |
+| :--- | :--- | :--- |
+| 远程 URL | `![alt](https://cdn.example.com/x.png)` | 静默跳过。 |
+| Data URI | `![alt](data:image/png;base64,…)` | 静默跳过。 |
+| 非图片文件 | `![alt](./notes.txt)` | 静默跳过。 |
+| 本地文件不存在 | `![alt](./已删除.png)` | 默认静默跳过。把 `ezimage.localImageUpload.skipNonExistent` 设为 `false` 可以让它们成为错误。 |
+
+确认弹窗会告知跳过的数量，所以不会有"静默漏改"的尴尬。
+
+### 第一版的限制
+
+- 只识别 Markdown 行内图片。引用式 `![alt][ref]` 和 HTML `<img>` 标签暂不支持（v1 范围之外）。
+- 仅支持本地 workspace（file scheme）。远程 workspace（WSL / SSH / Dev Containers）暂不支持。
+- 未保存（untitled）文档会被拒绝——请先保存文件，这样相对路径才能被解析。
+- **完全手动触发**：不会在保存时、粘贴时、或任何"自动"时机偷偷跑。打开菜单项 → 主动触发 → 看它工作 → 不满意就撤销。
+
+### 配置项
+
+| 配置 | 默认值 | 说明 |
+| :--- | :--- | :--- |
+| `ezimage.localImageUpload.enabled` | `false` | 在编辑器右键菜单里显示「EzImage: 把本地图片路径转成云端 URL」。默认关闭——开一次就行。 |
+| `ezimage.localImageUpload.skipNonExistent` | `true` | 跳过本地文件不存在的图片（通常是因为已被删除）。设为 `false` 时把它们当成错误处理。 |
+
 ## <span id="hotkeys"></span>⌨️ 快捷键
 
 | 功能 | Mac 快捷键 | Windows/Linux 快捷键 |
 | :--- | :--- | :--- |
-| **上传剪贴板图片** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
-| **上传本地文件** | 命令面板搜索 `EzImage: Upload Image File` |
+| **EzImage: 上传剪贴板图片** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
+| **EzImage: 选择并上传图片文件** | 命令面板搜索 `EzImage: 选择并上传图片文件` |
 
 ## <span id="i18n"></span>🌐 多语言
 
@@ -228,7 +274,7 @@ R2 公开访问没有配好。打开 R2 控制台的 **Settings → Public Acces
 
 ### 提示 `Missing R2 Access Key ID`（或其它 "Missing R2 ..." 错误）
 
-运行 `EzImage: Configure Settings`，按错误信息把对应字段填好。`accountId`、`accessKeyId`、`secretAccessKey`、`bucketName`、`publicUrl` 五项缺一不可。
+运行 `EzImage: 打开设置`，按错误信息把对应字段填好。`accountId`、`accessKeyId`、`secretAccessKey`、`bucketName`、`publicUrl` 五项缺一不可。
 
 ### `Cmd/Ctrl + Alt + V` 按了没反应
 

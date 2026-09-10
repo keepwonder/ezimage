@@ -39,6 +39,7 @@
 -   **📸 Ultimate Pasting Experience**:
     *   **Clipboard Upload**: Press `Cmd+Alt+V` (Mac) or `Ctrl+Alt+V` (Win/Linux) to instantly upload and insert.
     *   **Smooth Drag & Drop**: Drag images directly from your folder into the editor for automatic uploading.
+-   **🔄 Local Images → Cloud URLs**: Right-click → **EzImage: Convert Local Image Paths to URLs** to scan every `![alt](./local.png)` in the current Markdown document, upload them to your bucket, and replace the path in place — all in one atomic undo step.
 -   **📉 Intelligent Image Engine**: Powered by the industrial-grade `sharp` engine.
     *   Automatically convert images to **WebP** for maximum compression while maintaining quality.
     *   Supports automatic resizing (Max Width) and quality control.
@@ -82,7 +83,7 @@ EzImage not only supports standard **VS Code**, but also perfectly adapts to cur
 After installation, follow these steps to configure:
 
 1. Press `Cmd+Shift+P` (Mac) / `Ctrl+Shift+P` (Win) to open the command palette.
-2. Search and run **`EzImage: Configure Settings`**.
+2. Search and run **`EzImage: Open Settings`**.
 3. Configure your storage service (e.g., Cloudflare R2):
    - **Provider**: `r2`
    - **Account ID**: Your Cloudflare Account ID
@@ -160,12 +161,57 @@ For a step-by-step guide with screenshots covering Cloudflare R2 token creation,
 
 For path template variables in detail, see [📝 Path Variables Manual](docs/VARIABLES_CN.md).
 
+## <span id="local-images"></span>🔄 Local Images → Cloud URLs
+
+When you've been drafting locally and want to publish, you don't have to upload each image by hand. EzImage can scan your Markdown file, upload every local image to the bucket, and rewrite the references in place — all in one go.
+
+### Quick start
+
+1. Open `Settings` (`Cmd+,` / `Ctrl+,`) → search for `EzImage`.
+2. Enable **`ezimage.localImageUpload.enabled`**. This adds two entries to the editor right-click menu under **Modification**:
+    - **EzImage: Convert Local Image Paths to URLs** — scans the entire file.
+    - **EzImage: Convert Local Image Paths in Selection** — scans only the current selection (appears only when something is selected).
+3. Right-click anywhere in a Markdown file → **EzImage: Convert Local Image Paths to URLs**.
+4. EzImage finds every `![alt](./path.png)`, shows a confirmation like *"Found 5 local image(s) (2 skipped). Upload and replace in-place?"*, then uploads serially with a progress notification.
+5. The whole conversion lands as **one atomic edit** — press `Cmd+Z` once to roll it all back.
+
+### What gets scanned
+
+- ✅ Markdown inline images: `![alt](./relative.png)`, `![alt](/absolute/path.jpg)`, `![alt](<./with space.webp>)`, `![alt](./x.png "title")`.
+- ✅ Relative paths (resolved from the Markdown file's directory) and absolute paths.
+- ✅ The same image referenced multiple times — each reference is processed independently (same source → potentially multiple cloud URLs, since cloud keys are randomized by `ezimage.pathTemplate`).
+
+### What gets skipped (with reasons)
+
+| Reason | Example | Behaviour |
+| :--- | :--- | :--- |
+| Remote URL | `![alt](https://cdn.example.com/x.png)` | Skipped silently. |
+| Data URI | `![alt](data:image/png;base64,…)` | Skipped silently. |
+| Non-image file | `![alt](./notes.txt)` | Skipped silently. |
+| File not on disk | `![alt](./deleted.png)` | Skipped silently by default. Disable `ezimage.localImageUpload.skipNonExistent` to surface as an error. |
+
+The confirmation dialog tells you how many were skipped so nothing is silently dropped without context.
+
+### Limitations (v1)
+
+- Only Markdown inline images are matched. Reference-style (`![alt][ref]`) and HTML `<img>` tags are intentionally out of scope for v1.
+- Only local workspaces (file scheme). Remote workspaces (WSL, SSH, Dev Containers) are not yet supported.
+- Untitled (unsaved) documents are rejected — save the file first so relative paths can be resolved.
+- The conversion is **manual only**: it never runs on save, on paste, or otherwise behind your back. Enable the context-menu entry, trigger it, watch it work, undo if you regret it.
+
+### Settings
+
+| Setting | Default | What it does |
+| :--- | :--- | :--- |
+| `ezimage.localImageUpload.enabled` | `false` | Show "EzImage: Convert Local Image Paths to URLs" in the editor context menu. Off by default — opt in once and forget about it. |
+| `ezimage.localImageUpload.skipNonExistent` | `true` | Skip images whose local file is missing (deleted). Set `false` to surface them as hard errors instead. |
+
 ## <span id="hotkeys"></span>⌨️ Hotkeys
 
 | Action | Mac Hotkey | Windows/Linux Hotkey |
 | :--- | :--- | :--- |
-| **Upload Clipboard Image** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
-| **Upload Local File** | Search command `EzImage: Upload Image File` |
+| **EzImage: Upload Clipboard Image** | `Cmd + Alt + V` | `Ctrl + Alt + V` |
+| **EzImage: Pick & Upload Image Files** | Search command `EzImage: Pick & Upload Image Files` |
 
 ## <span id="i18n"></span>🌐 Languages
 
@@ -229,7 +275,7 @@ The object was uploaded but `ezimage.r2.publicUrl` doesn't match the bucket's ac
 
 ### `Missing R2 Access Key ID` (or another "Missing R2 …" error)
 
-Run `EzImage: Configure Settings` and fill in the field mentioned in the error. All five R2 fields (`accountId`, `accessKeyId`, `secretAccessKey`, `bucketName`, `publicUrl`) are required.
+Run `EzImage: Open Settings` and fill in the field mentioned in the error. All five R2 fields (`accountId`, `accessKeyId`, `secretAccessKey`, `bucketName`, `publicUrl`) are required.
 
 ### Cmd/Ctrl+Alt+V doesn't paste anything
 
