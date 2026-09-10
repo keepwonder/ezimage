@@ -2,44 +2,12 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { spawn } from 'child_process';
 import { EzImageSettings, IUploader, InsertFormat } from './types';
 import { UploaderFactory } from './uploaders';
 import { renderInsert } from './insertTemplate';
 import { t, configureI18n } from './i18n';
-
-// sharp is a native module with a platform-specific binary; we deliberately
-// don't bundle it. Loading is deferred until activate() so we can route any
-// load failure through the Output channel and offer a one-click install.
-let sharp: any = null;
-let sharpLoadAttempted = false;
-let sharpLoadError: string | null = null;
-let sharpInstallInFlight = false;
-
-function loadSharp(): any {
-  if (sharpLoadAttempted) return sharp;
-  sharpLoadAttempted = true;
-  try {
-    // Resolve via createRequire so we can locate sharp inside the extension
-    // installation directory (VS Code loads extensions from ~/.vscode/extensions/<id>/).
-    const modulePath = require.resolve('sharp', { paths: [__dirname] });
-    sharp = require(modulePath);
-    sharpLoadError = null;
-  } catch (e: any) {
-    sharp = null;
-    sharpLoadError = e?.message || String(e);
-  }
-  return sharp;
-}
-
-let outputChannel: vscode.OutputChannel;
-
-function log(message: string, type: 'info' | 'error' = 'info') {
-  if (outputChannel) {
-    const timestamp = new Date().toLocaleTimeString();
-    outputChannel.appendLine(`[${timestamp}] [${type.toUpperCase()}] ${message}`);
-  }
-}
+import { log, initLogger, getOutputChannel } from './logger';
+import { ensureSharpReady, probeSharp, loadSharp } from './sharpSetup';
 
 function generateRandom(length: number = 8): string {
   return Math.random().toString(36).substring(2, 2 + length);
@@ -96,14 +64,6 @@ function getSettings(): EzImageSettings {
   };
 }
 
-function getPluginSettings(): { autoInstallSharp: boolean; disableCompressionNotice: boolean } {
-  const config = vscode.workspace.getConfiguration('ezimage');
-  return {
-    autoInstallSharp: config.get<boolean>('autoInstallSharp') ?? true,
-    disableCompressionNotice: config.get<boolean>('disableCompressionNotice') ?? false,
-  };
-}
-
 function validateSettings(settings: EzImageSettings): string | null {
   if (settings.provider === 'r2') {
     if (!settings.r2.accountId) return 'Missing R2 Account ID';
@@ -114,25 +74,43 @@ function validateSettings(settings: EzImageSettings): string | null {
   return null;
 }
 
-async function compressImage(filePath: string, maxWidth: number, quality: number): Promise<string> {
+/**
+ * What `compressImage` did to the source file. Returning a structured
+ * result (instead of a bare path string) lets the caller tell the user
+ * whether compression actually happened or whether we fell back to the
+ * original — which matters because previously a small source image
+ * silently bypassed WebP encoding, leaving users wondering why their
+ * `.png` files were still `.png` after upload.
+ */
+type CompressionOutcome =
+  | { kind: 'compressed'; path: string; originalSize: number; compressedSize: number }
+  | { kind: 'fallback-larger'; path: string; originalSize: number; compressedSize: number }
+  | { kind: 'skipped-unsupported'; path: string }
+  | { kind: 'skipped-sharp-missing'; path: string };
+
+async function compressImage(
+  filePath: string,
+  maxWidth: number,
+  quality: number,
+): Promise<CompressionOutcome> {
   // Lazy load on first compression attempt; if it fails we surface the error
   // through Output and offer an auto-install path (handled by caller).
   const sharpInstance = loadSharp();
   if (!sharpInstance) {
-    return filePath;
+    return { kind: 'skipped-sharp-missing', path: filePath };
   }
 
   const ext = path.extname(filePath).toLowerCase();
   const supportedFormats = ['.jpg', '.jpeg', '.png', '.webp'];
 
   if (!supportedFormats.includes(ext)) {
-    return filePath;
+    return { kind: 'skipped-unsupported', path: filePath };
   }
 
-  const tempPath = path.join(os.tmpdir(), `compressed-${Date.now()}.webp`);
+  const tempPath = path.join(os.tmpdir(), `compressed-${Date.now()}-${path.basename(filePath)}.webp`);
 
   try {
-    log(`Compressing image: ${filePath}`, 'info');
+    log(t('log.compressionStarting', path.basename(filePath)), 'info');
     const image = sharpInstance(filePath);
     const metadata = await image.metadata();
 
@@ -148,209 +126,27 @@ async function compressImage(filePath: string, maxWidth: number, quality: number
     const compressedSize = fs.statSync(tempPath).size;
 
     if (compressedSize >= originalSize) {
+      // Compression made the file larger — fall back to the original
+      // rather than shipping a payload that's worse than what we started
+      // with. This is intentional behaviour (see analysis in commit
+      // history) and is what users have come to expect, so we keep it
+      // as the default but now log it explicitly so it's visible.
       if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-      return filePath;
+      return { kind: 'fallback-larger', path: filePath, originalSize, compressedSize };
     }
 
-    return tempPath;
+    return { kind: 'compressed', path: tempPath, originalSize, compressedSize };
   } catch (error) {
     log(t('log.compressionFailed', String(error)), 'error');
     if (fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
-    return filePath;
+    return { kind: 'skipped-unsupported', path: filePath };
   }
 }
 
-/**
- * Detect a usable npm binary on the system PATH.
- * Returns the absolute path or null.
- */
-function findNpmBinary(): string | null {
-  const candidates = process.platform === 'win32'
-    ? ['npm.cmd', 'npm.exe', 'npm']
-    : ['npm'];
-  for (const name of candidates) {
-    try {
-      const which = process.platform === 'win32' ? 'where' : 'which';
-      const result = require('child_process').execSync(`${which} ${name}`, {
-        stdio: ['ignore', 'pipe', 'ignore'],
-      }).toString().trim().split(/\r?\n/)[0];
-      if (result) return result;
-    } catch (_) {
-      // try next candidate
-    }
-  }
-  return null;
-}
-
-/**
- * Strip ANSI escape sequences, carriage returns, and progress-bar control
- * characters from npm's output so it reads cleanly inside VS Code's Output
- * channel (which doesn't render ANSI colours or terminal escape codes).
- *
- * The Output channel writes each line individually, so we also split on \n
- * and emit one log() call per line. Carriage returns collapse progress-bar
- * updates into a single line with the most recent value.
- */
-function sanitizeNpmLine(raw: string): string {
-  // Remove ANSI escape sequences (CSI + OSC + simple ESC sequences).
-  // https://github.com/chalk/ansi-regex/blob/main/index.js
-  let s = raw.replace(/\u001b\][^\u0007]*\u0007/g, '');     // OSC ... BEL
-  s = s.replace(/\u001b\[(?:\d{1,3}(?:;\d{1,3})*)?[A-Za-z]/g, ''); // CSI ... final-byte
-  s = s.replace(/\u001b[@-_][0-?]*[ -/]*[@-~]/g, '');      // other ESC sequences
-  // Carriage returns: keep only the last fragment of the line (progress bar update).
-  s = s.split('\r').pop() ?? '';
-  // Strip braille-pattern spinner glyphs (⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏) and other
-  // misc box-drawing characters npm emits in its progress UI.
-  s = s.replace(/[\u2800-\u28FF\u2500-\u259F]/g, '');
-  // Tabs to spaces (Output channel can render oddly with literal tabs).
-  s = s.replace(/\t/g, '  ');
-  return s;
-}
-
-/**
- * Splits a chunk of npm output into complete lines, sanitizing each one.
- * Returns [completedLines, trailingPartialLine]. Callers should buffer the
- * trailing partial until the next chunk.
- */
-function splitNpmChunk(chunk: string, carry: string): { lines: string[]; carry: string } {
-  const combined = carry + chunk;
-  const parts = combined.split('\n');
-  const lines = parts.slice(0, -1).map((p) => sanitizeNpmLine(p));
-  return { lines, carry: parts[parts.length - 1] };
-}
-
-/**
- * Run `npm install sharp --no-save --no-audit --no-fund` inside the extension
- * installation directory. Returns true on success.
- *
- * VS Code disables native module hot-reload, so on success the caller must
- * prompt the user to restart the extension host (or VS Code).
- *
- * We intentionally strip npm_config_target / npm_config_runtime / etc. so the
- * prebuilt binary selection is driven by the host platform (and the Node ABI
- * reported by the user's npm), not by VS Code's Electron variables.
- */
-function installSharp(extensionPath: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (sharpInstallInFlight) {
-      resolve(false);
-      return;
-    }
-    sharpInstallInFlight = true;
-
-    const npm = findNpmBinary();
-    if (!npm) {
-      log(t('log.sharpInstallNpmMissing'), 'error');
-      sharpInstallInFlight = false;
-      resolve(false);
-      return;
-    }
-
-    // Strip env vars that would make npm install against the wrong ABI.
-    const cleanEnv = { ...process.env } as NodeJS.ProcessEnv;
-    for (const key of Object.keys(cleanEnv)) {
-      if (/^npm_config_(target|runtime|disturl|build_from_source|libc)$/i.test(key)) {
-        delete cleanEnv[key];
-      }
-    }
-    cleanEnv.npm_config_update_notifier = 'false';
-    cleanEnv.npm_config_fund = 'false';
-    cleanEnv.npm_config_audit = 'false';
-    // Force plain output so we don't have to strip cursor-movement escape
-    // sequences that npm emits when it thinks it's writing to a TTY.
-    cleanEnv.npm_config_progress = 'false';
-    cleanEnv.npm_config_loglevel = 'info';
-    cleanEnv.FORCE_COLOR = '0';
-    cleanEnv.NO_COLOR = '1';
-
-    const args = ['install', 'sharp', '--no-save', '--no-audit', '--no-fund', '--ignore-scripts=false', '--loglevel=info', '--no-progress'];
-    log(t('log.sharpInstallRunning', npm, args.join(' ')), 'info');
-    log(t('log.sharpInstallCwd', extensionPath), 'info');
-
-    const child = spawn(npm, args, {
-      cwd: extensionPath,
-      env: cleanEnv,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-
-    let stdoutBuf = '';
-    let stderrBuf = '';
-    let stdoutCarry = '';
-    let stderrCarry = '';
-
-    const flushLines = (lines: string[]) => {
-      for (const line of lines) {
-        if (line.trim().length === 0) continue;
-        log(line, 'info');
-      }
-    };
-
-    child.stdout.on('data', (d) => {
-      const s = d.toString();
-      stdoutBuf += s;
-      const { lines, carry } = splitNpmChunk(s, stdoutCarry);
-      stdoutCarry = carry;
-      flushLines(lines);
-    });
-    child.stderr.on('data', (d) => {
-      const s = d.toString();
-      stderrBuf += s;
-      const { lines, carry } = splitNpmChunk(s, stderrCarry);
-      stderrCarry = carry;
-      flushLines(lines);
-    });
-
-    // 5 minute timeout — npm install sharp is usually under 30s, but a cold
-    // download of the libvips prebuilt can occasionally stretch past 1min.
-    const timeout = setTimeout(() => {
-      log(t('log.sharpInstallTimeout'), 'error');
-      child.kill('SIGTERM');
-    }, 5 * 60 * 1000);
-
-    child.on('error', (err) => {
-      clearTimeout(timeout);
-      log(t('log.sharpInstallProcessError', err.message), 'error');
-      log(t('log.nodeVersionPrompt'), 'info');
-      sharpInstallInFlight = false;
-      resolve(false);
-    });
-
-    child.on('close', (code) => {
-      clearTimeout(timeout);
-      // Flush any trailing partial line.
-      if (stdoutCarry) flushLines([sanitizeNpmLine(stdoutCarry)]);
-      if (stderrCarry) flushLines([sanitizeNpmLine(stderrCarry)]);
-      sharpInstallInFlight = false;
-      if (code === 0) {
-        log(t('log.sharpInstallSucceeded'), 'info');
-        resolve(true);
-      } else {
-        log(t('log.sharpInstallFailed', String(code)), 'error');
-        if (/EACCES|EPERM|EACCES/i.test(stderrBuf)) {
-          log(t('log.sharpInstallPermissionHint'), 'info');
-        } else if (/ENOTFOUND|getaddrinfo|EAI_AGAIN/i.test(stderrBuf)) {
-          log(t('log.sharpInstallNetworkHint'), 'info');
-        } else if (/404|Not Found/i.test(stderrBuf)) {
-          log(t('log.sharpInstallProxyHint'), 'info');
-        }
-        resolve(false);
-      }
-    });
-  });
-}
-
-/**
- * Check whether sharp is already present in the extension's node_modules
- * (i.e. install succeeded previously) even if require() failed — typically
- * because the binary doesn't match the runtime ABI.
- */
-function isSharpPresentOnDisk(extensionPath: string): boolean {
-  try {
-    const pkg = require(path.join(extensionPath, 'node_modules', 'sharp', 'package.json'));
-    return pkg?.name === 'sharp';
-  } catch (_) {
-    return false;
-  }
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(2)} MB`;
 }
 
 async function uploadAndInsert(
@@ -374,138 +170,216 @@ async function uploadAndInsert(
   }
 
   const originalName = path.basename(filePath);
+
+  try {
+    const result = await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: t('info.uploading', originalName),
+      cancellable: false,
+    }, () => uploadOne({
+      filePath,
+      isTemp,
+      displayName: originalName,
+    }));
+
+    if (!result) return null;
+
+    const position = editor.selection.active;
+    const insertSettings = overrideFormat
+      ? { ...settings.insert, format: overrideFormat }
+      : settings.insert;
+    const { snippet, trailingNewlines } = renderInsert({
+      url: result.url,
+      filename: originalName,
+      settings: insertSettings,
+    });
+    const insertText = snippet + '\n'.repeat(trailingNewlines);
+
+    await editor.edit((editBuilder) => {
+      editBuilder.insert(position, insertText);
+    });
+
+    // Surface compression outcome inline so a single-image upload also
+    // tells the user what landed on the bucket (compressed vs. kept
+    // original vs. skipped). Without this, the toast is "Uploaded
+    // successfully!" and the user has no idea if WebP actually shipped.
+    const note = result.compression ? formatSingleCompressionNote(result.compression) : '';
+    vscode.window.showInformationMessage(
+      note ? `${t('info.uploaded')} ${note}` : t('info.uploaded'),
+    );
+    return result.url;
+  } catch (err: any) {
+    log(t('error.uploadFailed', err.message), 'error');
+    vscode.window.showErrorMessage(t('error.uploadFailed', err.message));
+    return null;
+  }
+}
+
+/**
+ * Core upload primitive: take a local file, optionally compress, upload to
+ * the configured provider, and return the public URL.
+ *
+ * Used by both `uploadAndInsert` (single-clipboard / single-file flows)
+ * and `runLocalImageUpload` (bulk local-image conversion). The caller is
+ * responsible for any further editor manipulation — this function does
+ * NOT touch the document.
+ *
+ * Cleans up the compression temp file (if any) and the input file
+ * (if `isTemp === true`) on both success and failure paths.
+ */
+export interface UploadOneCompressionInfo {
+  kind: 'compressed' | 'fallback-larger' | 'skipped-unsupported' | 'skipped-sharp-missing' | 'disabled';
+  /** Original file size in bytes. Always present. */
+  originalSize: number;
+  /** Bytes actually uploaded. Same as originalSize for any non-compressed outcome. */
+  uploadedSize: number;
+}
+
+export interface UploadOneResult {
+  url: string;
+  key: string;
+  /** Compression outcome for this upload; undefined when compress was off. */
+  compression?: UploadOneCompressionInfo;
+}
+
+async function uploadOne(options: {
+  filePath: string;
+  isTemp?: boolean;
+  /** Used only for progress notification text. */
+  displayName?: string;
+  /**
+   * Whether to invoke `ensureSharpReady` for this call. Single-image
+   * paths want this true (per-call check is fine, sharp is cached so
+   * the cost is one boolean). Batch callers (runLocalImageUpload) set
+   * this false and call `ensureSharpReady` once before the loop, so the
+   * user only sees the install prompt once for the whole batch instead
+   * of once per image.
+   */
+  ensureSharp?: boolean;
+}): Promise<UploadOneResult | null> {
+  const { filePath, isTemp = false, displayName, ensureSharp = true } = options;
+  const settings = getSettings();
+  const originalName = path.basename(filePath);
   const targetKey = generateFilePath(originalName, settings.pathTemplate);
+  const shownName = displayName || originalName;
+  const originalSize = (() => {
+    try { return fs.statSync(filePath).size; } catch { return 0; }
+  })();
 
-  // If compression is requested but sharp is missing, give the user a one-shot
-  // chance to install it before we silently fall back to the original image.
-  const pluginSettings = getPluginSettings();
-  if (settings.compress && !loadSharp() && pluginSettings.autoInstallSharp) {
-    const ext = vscode.extensions.getExtension('kiang.ezimage');
-    const extensionPath = ext?.extensionPath || path.dirname(__dirname);
-    const onDisk = isSharpPresentOnDisk(extensionPath);
-
-    if (!onDisk) {
-      const installLabel = t('sharp.notInstalled.install');
-      const skipLabel = t('sharp.notInstalled.skip');
-      const dismissLabel = t('sharp.notInstalled.dismiss');
-      const choice = await vscode.window.showWarningMessage(
-        t('sharp.notInstalled.title'),
-        installLabel,
-        skipLabel,
-        dismissLabel,
-      );
-      if (choice === installLabel) {
-        const ok = await vscode.window.withProgress({
-          location: vscode.ProgressLocation.Notification,
-          title: t('log.sharpInstallRunning', 'npm', 'install sharp'),
-          cancellable: false,
-        }, () => installSharp(extensionPath));
-        if (ok) {
-          vscode.window.showInformationMessage(
-            t('sharp.reloadAfterInstall.title'),
-            t('sharp.reloadAfterInstall.action'),
-          ).then((action) => {
-            if (action === t('sharp.reloadAfterInstall.action')) {
-              vscode.commands.executeCommand('workbench.action.reloadWindow');
-            }
-          });
-        } else {
-          vscode.window.showErrorMessage(t('sharp.installFailed.title'));
-        }
-      } else if (choice === dismissLabel) {
-        await vscode.workspace.getConfiguration('ezimage').update('autoInstallSharp', false, vscode.ConfigurationTarget.Global);
-      }
-    } else if (!pluginSettings.disableCompressionNotice) {
-      // sharp is on disk but require() failed — most likely an ABI mismatch.
-      const viewLogLabel = t('sharp.installFailed.action');
-      const dismissLabel = t('sharp.notInstalled.abiMismatch.dismiss');
-      const choice = await vscode.window.showWarningMessage(
-        t('sharp.notInstalled.abiMismatch.title'),
-        viewLogLabel,
-        dismissLabel,
-      );
-      if (choice === viewLogLabel) {
-        outputChannel.show();
-      } else if (choice === dismissLabel) {
-        await vscode.workspace.getConfiguration('ezimage').update('disableCompressionNotice', true, vscode.ConfigurationTarget.Global);
-      }
-    }
+  // Centralised "is sharp usable?" gate. When the user has already
+  // dismissed the install prompt this returns false and we fall through
+  // to the existing "sharp missing" log inside compressImage().
+  if (ensureSharp) {
+    await ensureSharpReady(settings.compress);
   }
 
-  return await vscode.window.withProgress({
-    location: vscode.ProgressLocation.Notification,
-    title: t('info.uploading', originalName),
-    cancellable: false,
-  }, async () => {
-    let processedPath = filePath;
-    let usedRealExtension = false;
-    try {
-      // Compression
-      if (settings.compress) {
-        const before = processedPath;
-        processedPath = await compressImage(filePath, settings.maxWidth, settings.quality);
-        usedRealExtension = processedPath !== before;
+  let processedPath = filePath;
+  let compressedPath: string | null = null;
+  let compression: UploadOneCompressionInfo | undefined;
+  try {
+    if (settings.compress) {
+      const outcome = await compressImage(filePath, settings.maxWidth, settings.quality);
+      processedPath = outcome.path;
+
+      // Log so the user can see in Output whether WebP actually shipped
+      // or whether we silently fell back to the original. Without this,
+      // users see a `.png` URL after enabling compression and assume the
+      // extension is lying.
+      if (outcome.kind === 'compressed') {
+        compressedPath = outcome.path;
+        compression = {
+          kind: 'compressed',
+          originalSize: outcome.originalSize,
+          uploadedSize: outcome.compressedSize,
+        };
+        const saved = outcome.originalSize - outcome.compressedSize;
+        const pct = outcome.originalSize > 0
+          ? Math.round((saved / outcome.originalSize) * 100)
+          : 0;
+        log(
+          t(
+            'log.compressionDone',
+            formatBytes(outcome.originalSize),
+            formatBytes(outcome.compressedSize),
+            String(pct),
+          ),
+          'info',
+        );
+      } else if (outcome.kind === 'fallback-larger') {
+        compression = {
+          kind: 'fallback-larger',
+          originalSize: outcome.originalSize,
+          uploadedSize: outcome.originalSize,
+        };
+        log(
+          t(
+            'log.compressionFallbackLarger',
+            formatBytes(outcome.originalSize),
+            formatBytes(outcome.compressedSize),
+          ),
+          'info',
+        );
+      } else if (outcome.kind === 'skipped-sharp-missing') {
+        compression = {
+          kind: 'skipped-sharp-missing',
+          originalSize,
+          uploadedSize: originalSize,
+        };
+        log(t('log.compressionSkippedSharpMissing'), 'info');
+      } else if (outcome.kind === 'skipped-unsupported') {
+        compression = {
+          kind: 'skipped-unsupported',
+          originalSize,
+          uploadedSize: originalSize,
+        };
+        log(t('log.compressionSkippedUnsupported'), 'info');
       }
 
-      // If compression produced a real .webp file, use its real extension in
-      // the path template instead of the source file's extension (which would
-      // leave a .png/.jpg name on a webp payload).
-      let effectiveKey = targetKey;
-      if (usedRealExtension) {
-        const realExt = path.extname(processedPath).slice(1);
-        if (realExt) {
-          effectiveKey = targetKey.replace(/\.[^./]+$/, '') + '.' + realExt;
-        }
-      }
-
-      const uploader = UploaderFactory.create(settings);
-      log(t('log.uploading', String(settings.provider), effectiveKey), 'info');
-
-      const result = await uploader.upload({
-        filePath: processedPath,
-        originalName: effectiveKey // Use the generated key as the name for the uploader
-      });
-
-      // Cleanup compression temp file
-      if (processedPath !== filePath && fs.existsSync(processedPath)) {
-        fs.unlinkSync(processedPath);
-      }
-
-      // Cleanup clipboard temp file
-      if (isTemp && fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
-      const position = editor.selection.active;
-      const insertSettings = overrideFormat
-        ? { ...settings.insert, format: overrideFormat }
-        : settings.insert;
-      const { snippet, trailingNewlines } = renderInsert({
-        url: result.url,
-        filename: originalName,
-        settings: insertSettings,
-      });
-      const insertText = snippet + '\n'.repeat(trailingNewlines);
-
-      await editor.edit((editBuilder) => {
-        editBuilder.insert(position, insertText);
-      });
-
-      vscode.window.showInformationMessage(t('info.uploaded'));
-      return result.url;
-    } catch (err: any) {
-      log(t('error.uploadFailed', err.message), 'error');
-      vscode.window.showErrorMessage(t('error.uploadFailed', err.message));
-
-      if (processedPath !== filePath && fs.existsSync(processedPath)) {
-        fs.unlinkSync(processedPath);
-      }
-      if (isTemp && fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-      return null;
+      // Only the `compressed` outcome produces a real extension change
+      // (.png/.jpg → .webp). All fallback variants keep the original
+      // extension, so the cloud key stays aligned with the payload.
+    } else {
+      compression = {
+        kind: 'disabled',
+        originalSize,
+        uploadedSize: originalSize,
+      };
     }
-  });
+
+    // The temporary file from `compressImage` is a real `.webp` file —
+    // its extension overrides whatever was baked into the path template,
+    // otherwise we'd ship a `.png` filename containing WebP bytes.
+    let effectiveKey = targetKey;
+    if (compressedPath !== null) {
+      const realExt = path.extname(processedPath).slice(1);
+      if (realExt) {
+        effectiveKey = targetKey.replace(/\.[^./]+$/, '') + '.' + realExt;
+      }
+    }
+
+    const uploader = UploaderFactory.create(settings);
+    log(t('log.uploading', String(settings.provider), effectiveKey), 'info');
+
+    const result = await uploader.upload({
+      filePath: processedPath,
+      originalName: effectiveKey,
+    });
+
+    return { url: result.url, key: result.key, compression };
+  } catch (err: any) {
+    log(t('error.uploadFailed', err.message), 'error');
+    throw err;
+  } finally {
+    // Cleanup compression temp file
+    if (compressedPath !== null && compressedPath !== filePath && fs.existsSync(compressedPath)) {
+      try { fs.unlinkSync(compressedPath); } catch { /* swallow */ }
+    }
+    // Cleanup clipboard temp file
+    if (isTemp && fs.existsSync(filePath)) {
+      try { fs.unlinkSync(filePath); } catch { /* swallow */ }
+    }
+    void shownName; // currently used only for the outer progress title
+  }
 }
 
 async function saveClipboardImage(): Promise<string | null> {
@@ -672,8 +546,333 @@ function applyI18nSettings(): void {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Local-image-to-cloud-URL conversion
+// ---------------------------------------------------------------------------
+
+import { scanMarkdownImages, LocalImageMatch } from './localImageScanner';
+import { buildReplacementEdit, renderReplacement, Replacement } from './localImageReplacer';
+
+/**
+ * Main entry point for the "Upload Local Images" command family.
+ *
+ *  - `scope: 'document'`       — scan the whole file.
+ *  - `scope: 'selection'`      — scan only the active selection (no-op
+ *                                 when selection is empty, in which case
+ *                                 we fall back to the whole document).
+ *
+ * Flow:
+ *   1. Pre-flight: reject untitled / non-md / missing files.
+ *   2. Scan the document text for `![alt](path)` references.
+ *   3. Surface a "Found X, Y skipped" confirmation so the user can
+ *      abort before any network calls happen.
+ *   4. Serial upload via `uploadOne()`, collecting a list of
+ *      `{ range, cloudUrl }` for successful items.
+ *   5. Apply all replacements in a single WorkspaceEdit so the user
+ *      gets ONE undo step covering the whole conversion.
+ *   6. Summary notification.
+ *
+ * Failures are isolated per image: a bad upload does not abort the
+ * batch. The summary tells the user how many succeeded and how many
+ * failed (with details in the Output channel).
+ */
+async function runLocalImageUpload(scope: 'document' | 'selection'): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== 'markdown') return;
+
+  const doc = editor.document;
+
+  // Untitled documents don't have a meaningful fsPath; we cannot
+  // resolve relative paths from them.
+  if (doc.isDirty && doc.uri.scheme === 'untitled') {
+    vscode.window.showErrorMessage(t('localUpload.error.unsavedDoc'));
+    return;
+  }
+  if (doc.uri.scheme !== 'file') {
+    vscode.window.showErrorMessage(t('localUpload.error.unsupportedScheme'));
+    return;
+  }
+
+  // Determine scan range + text.
+  const hasSelection = !editor.selection.isEmpty;
+  const useSelection = scope === 'selection' && hasSelection;
+  const scanRange = useSelection ? editor.selection : doc.validateRange(new vscode.Range(0, 0, doc.lineCount, 0));
+  const text = doc.getText(scanRange);
+  const scanOffset = doc.offsetAt(scanRange.start);
+  const baseDir = path.dirname(doc.uri.fsPath);
+
+  // Honour user-controlled behaviour: missing files can either be
+  // silently skipped (default) or surfaced as hard skips.
+  const config = vscode.workspace.getConfiguration('ezimage');
+  const skipNonExistent = config.get<boolean>('localImageUpload.skipNonExistent') ?? true;
+
+  const matches = scanMarkdownImages(text, baseDir, { skipNonExistent });
+  const processable = matches.filter((m) => !m.skipReason);
+  const skipped = matches.filter((m) => m.skipReason);
+
+  if (processable.length === 0) {
+    vscode.window.showInformationMessage(
+      skipped.length > 0
+        ? t('localUpload.noCandidates.withSkipped', String(skipped.length))
+        : t('localUpload.noCandidates'),
+    );
+    log(
+      t(
+        'log.localUploadNothingToDo',
+        String(matches.length),
+        String(skipped.length),
+      ),
+      'info',
+    );
+    return;
+  }
+
+  // Pre-flight confirmation: gives the user a chance to back out before
+  // we start hitting the network. Skipped count is informational.
+  const confirmLabel = t('localUpload.confirm.action');
+  const choice = await vscode.window.showInformationMessage(
+    t(
+      'localUpload.confirm',
+      String(processable.length),
+      String(skipped.length),
+    ),
+    { title: confirmLabel },
+  );
+  if (choice?.title !== confirmLabel) return;
+
+  // Validate configuration once before the loop so we don't burn
+  // half-way through and then discover R2 is unconfigured.
+  const settings = getSettings();
+  const settingsError = validateSettings(settings);
+  if (settingsError) {
+    const configureLabel = t('error.configAction');
+    const action = await vscode.window.showErrorMessage(
+      t('error.configMissing', settingsError),
+      configureLabel,
+    );
+    if (action === configureLabel) {
+      vscode.commands.executeCommand('ezimage.configure');
+    }
+    return;
+  }
+
+  // Single install prompt for the whole batch. Without this gate the
+  // user would get an installSharp dialog once per image when sharp is
+  // missing — annoying even if "Don't ask again" is honoured.
+  await ensureSharpReady(settings.compress);
+
+  const replacements: Replacement[] = [];
+  let succeeded = 0;
+  let failed = 0;
+  // Compression rollup for the summary notification. Empty unless at
+  // least one item had compression metadata.
+  const compressionRollup = {
+    compressed: 0,
+    fallback: 0,
+    skipped: 0,
+    disabled: 0,
+    bytesIn: 0,
+    bytesOut: 0,
+  };
+
+  await vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: t('localUpload.progressTitle'),
+      cancellable: true,
+    },
+    async (progress, token) => {
+      for (let i = 0; i < processable.length; i++) {
+        if (token.isCancellationRequested) break;
+        const m = processable[i];
+        progress.report({
+          message: t('localUpload.progressMessage', String(i + 1), String(processable.length)),
+          increment: 100 / processable.length,
+        });
+
+        try {
+          const result = await uploadOne({
+            filePath: m.absPath!,
+            displayName: path.basename(m.absPath!),
+            ensureSharp: false, // already handled once before the loop
+          });
+          if (!result) {
+            failed++;
+            continue;
+          }
+          const newText = renderReplacement({
+            match: m,
+            cloudUrl: result.url,
+            settings: settings.insert,
+          });
+          replacements.push({
+            range: {
+              start: m.range.start + scanOffset,
+              end: m.range.end + scanOffset,
+            },
+            newText,
+          });
+          succeeded++;
+
+          if (result.compression) {
+            rollupCompression(compressionRollup, result.compression);
+          }
+        } catch (err: any) {
+          failed++;
+          log(
+            t('log.localUploadItemFailed', path.basename(m.absPath || m.rawPath), err?.message || String(err)),
+            'error',
+          );
+        }
+      }
+    },
+  );
+
+  // Apply all replacements atomically.
+  if (replacements.length > 0) {
+    const edit = buildReplacementEdit(doc, replacements);
+    const applied = await vscode.workspace.applyEdit(edit);
+    if (!applied) {
+      log(t('log.localUploadEditFailed'), 'error');
+      vscode.window.showErrorMessage(t('localUpload.error.editFailed'));
+      return;
+    }
+  }
+
+  vscode.window.showInformationMessage(
+    formatBatchSummary(succeeded, failed, compressionRollup),
+  );
+  log(
+    t(
+      'log.localUploadDone',
+      String(succeeded),
+      String(failed),
+      formatCompressionRollupLine(compressionRollup),
+    ),
+    'info',
+  );
+}
+
+/**
+ * Aggregate one upload's compression metadata into the batch rollup.
+ * Buckets are mutually exclusive — each upload lands in exactly one.
+ */
+function rollupCompression(
+  rollup: {
+    compressed: number;
+    fallback: number;
+    skipped: number;
+    disabled: number;
+    bytesIn: number;
+    bytesOut: number;
+  },
+  info: UploadOneCompressionInfo,
+): void {
+  switch (info.kind) {
+    case 'compressed':
+      rollup.compressed++;
+      break;
+    case 'fallback-larger':
+      rollup.fallback++;
+      break;
+    case 'skipped-unsupported':
+    case 'skipped-sharp-missing':
+      rollup.skipped++;
+      break;
+    case 'disabled':
+      rollup.disabled++;
+      break;
+  }
+  rollup.bytesIn += info.originalSize;
+  rollup.bytesOut += info.uploadedSize;
+}
+
+/**
+ * Format a per-item compression outcome as a one-liner suitable for
+ * appending to the existing `info.uploaded` toast.
+ */
+function formatSingleCompressionNote(info: UploadOneCompressionInfo): string {
+  if (info.kind === 'compressed') {
+    const saved = info.originalSize - info.uploadedSize;
+    const pct = info.originalSize > 0
+      ? Math.round((saved / info.originalSize) * 100)
+      : 0;
+    return t('info.compression.compressed', formatBytes(info.originalSize), formatBytes(info.uploadedSize), String(pct));
+  }
+  if (info.kind === 'fallback-larger') {
+    return t('info.compression.fallbackLarger', formatBytes(info.originalSize));
+  }
+  if (info.kind === 'skipped-sharp-missing') {
+    return t('info.compression.skippedSharpMissing');
+  }
+  if (info.kind === 'skipped-unsupported') {
+    return t('info.compression.skippedUnsupported');
+  }
+  // 'disabled' → compression off entirely, no note needed.
+  return '';
+}
+
+/**
+ * Batch summary line. Builds the user-facing notification text from the
+ * aggregate counts so a glance is enough to know whether compression
+ * actually did work.
+ */
+function formatBatchSummary(
+  succeeded: number,
+  failed: number,
+  rollup: {
+    compressed: number;
+    fallback: number;
+    skipped: number;
+    disabled: number;
+    bytesIn: number;
+    bytesOut: number;
+  },
+): string {
+  const head = t('localUpload.summary', String(succeeded), String(failed));
+  const tail = formatCompressionRollupLine(rollup);
+  return tail ? `${head} ${tail}` : head;
+}
+
+function formatCompressionRollupLine(rollup: {
+  compressed: number;
+  fallback: number;
+  skipped: number;
+  disabled: number;
+  bytesIn: number;
+  bytesOut: number;
+}): string {
+  const parts: string[] = [];
+
+  // Compression-enabled buckets: only mention when compress is on AND
+  // we actually saw at least one image. `disabled === succeeded` means
+  // every upload had compress=false, so the rollup is uninteresting.
+  if (rollup.compressed + rollup.fallback + rollup.skipped > 0) {
+    parts.push(t(
+      'info.compression.batch.compressedAndFallback',
+      String(rollup.compressed),
+      String(rollup.fallback),
+    ));
+    const saved = rollup.bytesIn - rollup.bytesOut;
+    if (saved > 0) {
+      parts.push(t('info.compression.batch.saved', formatBytes(saved)));
+    } else if (saved === 0 && rollup.bytesIn > 0) {
+      // No savings at all (e.g. all images were fallback-kept).
+      parts.push(t('info.compression.batch.noSavings'));
+    }
+  } else if (rollup.disabled > 0) {
+    parts.push(t('info.compression.batch.disabled'));
+  }
+
+  return parts.join(' ');
+}
+
 export function activate(context: vscode.ExtensionContext) {
-  outputChannel = vscode.window.createOutputChannel('EzImage');
+  // Wire up the Output channel + i18n, then probe sharp. The order
+  // matters: `log()` is a no-op until `initLogger` runs, so anything
+  // that calls `log()` during activation (including `probeSharp`) must
+  // come after this line.
+  initLogger(vscode.window.createOutputChannel('EzImage'));
 
   // Wire up i18n. The user's `ezimage.language` setting wins; otherwise we
   // track VS Code's display language. The listener below makes language
@@ -689,16 +888,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   log('EzImage is now active', 'info');
 
-  // Probe sharp eagerly so any load failure surfaces in Output from the start,
-  // rather than waiting for the user's first upload.
-  const probe = loadSharp();
-  if (probe) {
-    log(t('log.compressionReady', probe.versions?.sharp || 'unknown'), 'info');
-  } else {
-    log(t('log.compressionUnavailable', String(sharpLoadError || 'unknown')), 'error');
-    log(t('log.compressionWillFallback'), 'error');
-    log(t('log.compressionFallbackHint'), 'info');
-  }
+  // Probe sharp eagerly so any load failure surfaces in Output from the
+  // start, rather than waiting for the user's first upload.
+  probeSharp();
 
   const dropProvider = vscode.languages.registerDocumentDropEditProvider({ language: 'markdown' }, new EzImageDropProvider());
 
@@ -785,7 +977,26 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('workbench.action.openSettings', 'ezimage');
   });
 
-  context.subscriptions.push(outputChannel, dropProvider, uploadClipboardCmd, uploadClipboardAsCmd, uploadFileCmd, configureCmd);
+  const uploadLocalImagesCmd = vscode.commands.registerCommand(
+    'ezimage.uploadLocalImages',
+    () => runLocalImageUpload('document'),
+  );
+
+  const uploadLocalImagesInSelectionCmd = vscode.commands.registerCommand(
+    'ezimage.uploadLocalImagesInSelection',
+    () => runLocalImageUpload('selection'),
+  );
+
+  context.subscriptions.push(
+    getOutputChannel()!,
+    dropProvider,
+    uploadClipboardCmd,
+    uploadClipboardAsCmd,
+    uploadFileCmd,
+    configureCmd,
+    uploadLocalImagesCmd,
+    uploadLocalImagesInSelectionCmd,
+  );
 }
 
 export function deactivate() { }

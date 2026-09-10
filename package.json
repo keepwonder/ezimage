@@ -30,24 +30,31 @@
     "commands": [
       {
         "command": "ezimage.uploadClipboard",
-        "title": "Upload Clipboard Image",
-        "category": "EzImage"
+        "title": "EzImage: Upload Clipboard Image"
       },
       {
         "command": "ezimage.uploadClipboardAs",
-        "title": "Upload Clipboard Image As…",
-        "category": "EzImage",
+        "title": "EzImage: Upload Clipboard Image As…",
         "description": "Pick the insert format (Markdown / HTML center / HTML figure) for this upload only."
       },
       {
         "command": "ezimage.uploadFile",
-        "title": "Upload Image File",
-        "category": "EzImage"
+        "title": "EzImage: Pick & Upload Image Files",
+        "description": "Open a system file dialog to choose one or more images, then upload them to the configured cloud provider."
+      },
+      {
+        "command": "ezimage.uploadLocalImages",
+        "title": "EzImage: Convert Local Image Paths to URLs",
+        "description": "Find local image references in this Markdown file and upload them to the cloud, replacing the path in-place."
+      },
+      {
+        "command": "ezimage.uploadLocalImagesInSelection",
+        "title": "EzImage: Convert Local Image Paths in Selection",
+        "description": "Same as 'Convert Local Image Paths to URLs' but only operates on the current selection."
       },
       {
         "command": "ezimage.configure",
-        "title": "Configure Settings",
-        "category": "EzImage"
+        "title": "EzImage: Open Settings"
       }
     ],
     "configuration": {
@@ -177,6 +184,18 @@
           "description": "Use the source filename as the alt text / figcaption. Recommended for SEO and screen readers.",
           "order": 61
         },
+        "ezimage.localImageUpload.enabled": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Show **EzImage: Convert Local Image Paths to URLs** in the editor context menu. Disabled by default — opt in per workspace or globally. See the [README](https://github.com/keepwonder/ezimage#local-images-to-cloud-urls) for details.",
+          "order": 70
+        },
+        "ezimage.localImageUpload.skipNonExistent": {
+          "type": "boolean",
+          "default": true,
+          "description": "Silently skip images whose file does not exist on disk (e.g. deleted from disk). Disable to surface them as errors instead.",
+          "order": 71
+        },
         "ezimage.language": {
           "type": "string",
           "enum": [
@@ -214,6 +233,16 @@
           "command": "ezimage.uploadFile",
           "when": "editorLangId == markdown",
           "group": "modification@1"
+        },
+        {
+          "command": "ezimage.uploadLocalImages",
+          "when": "editorLangId == markdown && config.ezimage.localImageUpload.enabled",
+          "group": "modification@3"
+        },
+        {
+          "command": "ezimage.uploadLocalImagesInSelection",
+          "when": "editorLangId == markdown && editorHasSelection && config.ezimage.localImageUpload.enabled",
+          "group": "modification@3"
         }
       ]
     }

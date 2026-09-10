@@ -173,7 +173,7 @@ export function resolveCustomTemplate(customTemplate: string): string | null {
  * placeholders are left as-is so a typo in `customTemplate` is visible
  * in the editor instead of silently dropped.
  */
-function substituteVariables(template: string, vars: Record<TemplateVariable, string>): string {
+export function substituteVariables(template: string, vars: Record<TemplateVariable, string>): string {
     let out = template;
     for (const v of TEMPLATE_VARIABLES) {
         // Use split/join instead of .replaceAll for Node 18 compat.
